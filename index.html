@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>본앤밸런스 PT 관리</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      * { box-sizing: border-box; }
+      html, body, #root { margin: 0; min-height: 100%; }
+      body {
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        color: #0f172a;
+      }
+      button, input { font: inherit; }
+      .app-shell {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+      }
+      .phone {
+        width: 100%;
+        max-width: 460px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 12px 36px rgba(15,23,42,0.12);
+      }
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid #e2e8f0;
+        padding: 18px;
+      }
+      .title { font-size: 28px; font-weight: 900; }
+      .subtitle { margin-top: 4px; color: #64748b; font-size: 13px; }
+      .chip-row { display: flex; gap: 8px; overflow-x: auto; margin-top: 12px; padding-bottom: 4px; }
+      .chip {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 800;
+        white-space: nowrap;
+        cursor: pointer;
+        background: #e2e8f0;
+        color: #334155;
+      }
+      .chip.active { background: #0f172a; color: #fff; }
+      .page { display: grid; gap: 14px; padding: 16px; }
+      .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 22px;
+        padding: 16px;
+      }
+      .card h3 { margin: 0; font-size: 19px; font-weight: 800; }
+      .card .card-sub { margin-top: 4px; margin-bottom: 0; color: #64748b; font-size: 13px; }
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .info-box {
+        min-height: 102px;
+        border-radius: 18px;
+        padding: 14px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .info-box.warning { background: #fffbeb; border-color: #fcd34d; }
+      .info-box.danger { background: #fff1f2; border-color: #fda4af; }
+      .label { font-size: 13px; color: #64748b; }
+      .value { font-size: 18px; font-weight: 800; margin-top: 4px; }
+      .muted { color: #64748b; font-size: 14px; }
+      .section-gap { margin-top: 12px; }
+      .item {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 14px;
+        margin-bottom: 10px;
+      }
+      .item-title { font-weight: 800; }
+      .row { display: flex; gap: 10px; }
+      .row-between { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+      .btn {
+        border: none;
+        border-radius: 14px;
+        min-height: 44px;
+        padding: 0 14px;
+        font-weight: 800;
+        cursor: pointer;
+        background: #0f172a;
+        color: #fff;
+      }
+      .btn.secondary {
+        background: #fff;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+      }
+      .btn.full { width: 100%; }
+      .input {
+        width: 100%;
+        border: 1px solid #dbe2ea;
+        border-radius: 14px;
+        padding: 12px 14px;
+        font-size: 14px;
+        outline: none;
+      }
+      .field { margin-bottom: 12px; }
+      .field label { display: block; margin-bottom: 6px; font-size: 13px; color: #475569; font-weight: 700; }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+      }
+      .slot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .slot {
+        border-radius: 16px;
+        border: 1px solid #86efac;
+        background: #ecfdf5;
+        padding: 12px;
+        cursor: pointer;
+      }
+      .slot.booked {
+        border-color: #cbd5e1;
+        background: #f1f5f9;
+        cursor: not-allowed;
+        opacity: 0.75;
+      }
+      .slot-time { font-weight: 800; }
+      .slot-status { margin-top: 4px; font-size: 12px; }
+      .alert-box {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 10px;
+      }
+      .alert-title { font-weight: 800; color: #92400e; }
+      .alert-text { margin-top: 6px; color: #92400e; font-size: 14px; }
+      .soft-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,0.35);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 18px;
+        z-index: 50;
+      }
+      .modal {
+        width: 100%;
+        max-width: 400px;
+        background: #fff;
+        border-radius: 24px;
+        border: 1px solid #e2e8f0;
+        padding: 18px;
+      }
+      .modal h3 { margin: 0; font-size: 20px; font-weight: 800; }
+      .modal p { margin-top: 4px; color: #64748b; font-size: 13px; }
+      .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+      .week-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+      .week-head div { text-align: center; font-size: 12px; color: #64748b; font-weight: 700; }
+      .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+      .week-day {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        min-height: 150px;
+        padding: 8px;
+        background: #fff;
+      }
+      .week-day.today { border: 2px solid #3b82f6; }
+      .week-label { text-align: center; font-size: 12px; font-weight: 800; }
+      .mini-entry {
+        margin-top: 6px;
+        border-radius: 10px;
+        padding: 6px;
+        font-size: 11px;
+      }
+      .search-box { margin-top: 12px; }
+      .search-results { display: grid; gap: 10px; margin-top: 10px; }
+      .search-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .search-card-title { font-weight: 800; }
+      .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .summary-btn {
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 14px;
+        background: #f8fafc;
+        cursor: pointer;
+        text-align: left;
+      }
+      .summary-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+      .trainer-table-head, .trainer-table-row {
+        display: grid;
+        grid-template-columns: 0.9fr 0.9fr 1.2fr 1fr 1fr 0.8fr 0.8fr;
+        gap: 8px;
+        font-size: 12px;
+        align-items: center;
+      }
+      .trainer-table-head { color: #64748b; font-weight: 700; }
+      .trainer-table-row { margin-top: 8px; }
+      @media (max-width: 520px) {
+        .app-shell { padding: 0; }
+        .phone { border-radius: 0; max-width: none; min-height: 100vh; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const { useMemo, useRef, useState } = React;
+
+      const TODAY = (() => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      })();
+      const NOW = new Date();
+      const TIME_SLOTS = [
+        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+        "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+        "18:00", "18:30", "19:00", "19:30", "20:00",
+      ];
+
+      function formatDateValue(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+      function parseDate(dateString) {
+        const [y, m, d] = dateString.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      }
+      function parseDateTime(date, time) {
+        const [y, m, d] = date.split("-").map(Number);
+        const [hh, mm] = time.split(":").map(Number);
+        return new Date(y, m - 1, d, hh, mm, 0);
+      }
+      function addDays(dateString, days) {
+        const date = parseDate(dateString);
+        date.setDate(date.getDate() + days);
+        return formatDateValue(date);
+      }
+      function addOneYear(dateString) {
+        const date = parseDate(dateString);
+        date.setFullYear(date.getFullYear() + 1);
+        return formatDateValue(date);
+      }
+      function formatDateLabel(dateString) {
+        const date = parseDate(dateString);
+        return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+      }
+      function getStartOfWeekSunday(dateString) {
+        const date = parseDate(dateString);
+        date.setDate(date.getDate() - date.getDay());
+        return formatDateValue(date);
+      }
+      function makeDateRange(startDate, days) {
+        return Array.from({ length: days }, (_, i) => addDays(startDate, i));
+      }
+      function formatPhone(value) {
+        const numbers = value.replace(/[^0-9]/g, "").slice(0, 11);
+        if (numbers.length < 4) return numbers;
+        if (numbers.length < 8) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+        return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+      }
+      function isUpcoming(date, time) {
+        return parseDateTime(date, time).getTime() >= NOW.getTime();
+      }
+      function canCancel(date, time) {
+        const diffHours = (parseDateTime(date, time).getTime() - NOW.getTime()) / (1000 * 60 * 60);
+        return diffHours >= 48;
+      }
+      function getBookingStatusLabel(status) {
+        return {
+          requested: "예약 요청",
+          confirmed: "예약 확정",
+          awaiting_member_confirmation: "회원 확인 대기",
+          deducted: "차감 완료",
+          cancelled: "취소됨",
+        }[status] || status;
+      }
+      function getTone(status) {
+        return {
+          requested: { bg: "#f5f3ff", border: "#c4b5fd", text: "#6d28d9" },
+          confirmed: { bg: "#eff6ff", border: "#93c5fd", text: "#1d4ed8" },
+          awaiting_member_confirmation: { bg: "#fffbeb", border: "#fcd34d", text: "#b45309" },
+          deducted: { bg: "#ecfdf5", border: "#86efac", text: "#047857" },
+          cancelled: { bg: "#fff1f2", border: "#fda4af", text: "#be123c" },
+        }[status] || { bg: "#f8fafc", border: "#cbd5e1", text: "#334155" };
+      }
+      function getMemberStatus(member) {
+        if (member.expiryDate < TODAY) return "expired";
+        if (member.remainingSessions <= 0) return "completed";
+        return "active";
+      }
+      function getMemberStatusLabel(member) {
+        return { active: "사용중", expired: "만료", completed: "사용완료" }[getMemberStatus(member)];
+      }
+      function getMemberStatusTone(member) {
+        const status = getMemberStatus(member);
+        return {
+          active: { bg: "#ecfdf5", border: "#86efac", text: "#047857" },
+          expired: { bg: "#fff1f2", border: "#fda4af", text: "#be123c" },
+          completed: { bg: "#fffbeb", border: "#fcd34d", text: "#b45309" },
+        }[status];
+      }
+      function getDaysUntilExpiry(expiryDate) {
+        return Math.floor((parseDate(expiryDate).getTime() - parseDate(TODAY).getTime()) / (1000 * 60 * 60 * 24));
+      }
+      function getLastLessonDate(memberId, bookings) {
+        const completed = bookings.filter((b) => b.memberId === memberId && b.status === "deducted").sort((a, b) => parseDateTime(b.date, b.time) - parseDateTime(a.date, a.time));
+        return completed[0] ? `${completed[0].date} ${completed[0].time}` : "없음";
+      }
+      function getUsedSessions(member) {
+        return Math.max(0, member.totalSessions - member.remainingSessions);
+      }
+      function getAlertItems(members, trainers, bookings) {
+        return members.flatMap((member) => {
+          const trainer = trainers.find((t) => t.id === member.trainerId);
+          const items = [];
+          const daysUntilExpiry = getDaysUntilExpiry(member.expiryDate);
+          if (daysUntilExpiry >= 0 && daysUntilExpiry <= 30) {
+            items.push({ id: `${member.id}-expiry`, memberId: member.id, trainerName: trainer?.name || "-", title: "만료 임박", message: `${member.name} 회원의 만료일까지 ${daysUntilExpiry}일 남았습니다.` });
+          }
+          if (member.remainingSessions > 0 && member.remainingSessions <= 3) {
+            items.push({ id: `${member.id}-remaining`, memberId: member.id, trainerName: trainer?.name || "-", title: "잔여 횟수 부족", message: `${member.name} 회원의 잔여 횟수가 ${member.remainingSessions}회 남았습니다.` });
+          }
+          return items;
+        });
+      }
+
+      const DEMO_ACCOUNTS = [
+        { id: "member-noah", role: "member", label: "노아 회원", memberId: "m1" },
+        { id: "trainer-kim", role: "trainer", label: "김트레이너", trainerId: "t1" },
+        { id: "admin", role: "admin", label: "센터 관리자" },
+      ];
+      const INITIAL_TRAINERS = [
+        { id: "t1", name: "김트레이너", phone: "010-9000-1111", specialty: "체형교정" },
+        { id: "t2", name: "박트레이너", phone: "010-9000-2222", specialty: "다이어트" },
+        { id: "t3", name: "이트레이너", phone: "010-9000-3333", specialty: "근력증가" },
+      ];
+      const INITIAL_MEMBERS = [
+        { id: "m1", name: "노아", phone: "010-1111-2222", trainerId: "t1", totalSessions: 22, remainingSessions: 17, firstLessonDate: addDays(TODAY, -3), expiryDate: addOneYear(addDays(TODAY, -3)) },
+        { id: "m2", name: "민지", phone: "010-3333-4444", trainerId: "t2", totalSessions: 8, remainingSessions: 4, firstLessonDate: addDays(TODAY, -5), expiryDate: addOneYear(addDays(TODAY, -5)) },
+        { id: "m3", name: "수현", phone: "010-5555-6666", trainerId: "t1", totalSessions: 57, remainingSessions: 56, firstLessonDate: addDays(TODAY, -2), expiryDate: addOneYear(addDays(TODAY, -2)) },
+      ];
+      const INITIAL_BOOKINGS = [
+        { id: "b1", trainerId: "t1", memberId: "m1", date: TODAY, time: "10:00", status: "confirmed" },
+        { id: "b2", trainerId: "t1", memberId: "m3", date: TODAY, time: "13:00", status: "awaiting_member_confirmation" },
+        { id: "b3", trainerId: "t2", memberId: "m2", date: TODAY, time: "11:00", status: "confirmed" },
+        { id: "b4", trainerId: "t1", memberId: "m1", date: addDays(TODAY, 1), time: "09:00", status: "confirmed" },
+        { id: "b5", trainerId: "t1", memberId: "m3", date: addDays(TODAY, 2), time: "15:00", status: "confirmed" },
+        { id: "b6", trainerId: "t2", memberId: "m2", date: addDays(TODAY, 5), time: "18:00", status: "confirmed" },
+      ];
+      const INITIAL_REPORTS = [
+        { id: "r1", memberId: "m1", message: "최근 수업 기록이 반영되었습니다. 남은 횟수를 확인해 주세요.", createdAt: `${TODAY} 12:10` },
+      ];
+
+      function ActionButton({ title, onClick, kind = "primary", full = false }) {
+        return <button type="button" onClick={onClick} className={`btn ${kind === "secondary" ? "secondary" : ""} ${full ? "full" : ""}`}>{title}</button>;
+      }
+      function TextField({ label, value, onChange, placeholder, type = "text" }) {
+        return (
+          <div className="field">
+            <label>{label}</label>
+            <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} type={type} />
+          </div>
+        );
+      }
+      function Pill({ label, tone }) {
+        return <span className="badge" style={{ background: tone.bg, borderColor: tone.border, color: tone.text }}>{label}</span>;
+      }
+      function Modal({ open, children }) {
+        if (!open) return null;
+        return <div className="overlay"><div className="modal">{children}</div></div>;
+      }
+      function SectionCard({ title, subtitle, children, innerRef }) {
+        return (
+          <div className="card" ref={innerRef}>
+            <h3>{title}</h3>
+            {subtitle ? <p className="card-sub">{subtitle}</p> : null}
+            <div className="section-gap">{children}</div>
+          </div>
+        );
+      }
+
+      function App() {
+        const [currentUser, setCurrentUser] = useState(DEMO_ACCOUNTS[0]);
+        const [trainers] = useState(INITIAL_TRAINERS);
+        const [members, setMembers] = useState(INITIAL_MEMBERS);
+        const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
+        const [reports, setReports] = useState(INITIAL_REPORTS);
+        const [deletedBookings, setDeletedBookings] = useState([]);
+        const [searchQuery, setSearchQuery] = useState("");
+
+        const currentMember = members.find((m) => m.id === currentUser.memberId) || members[0];
+        const currentTrainer = trainers.find((t) => t.id === currentUser.trainerId) || trainers[0];
+        const alertItems = useMemo(() => getAlertItems(members, trainers, bookings), [members, trainers, bookings]);
+
+        const memberBookings = bookings.filter((b) => b.memberId === currentMember.id && b.status !== "cancelled" && b.status !== "deducted");
+        const pendingUsages = bookings.filter((b) => b.memberId === currentMember.id && b.status === "awaiting_member_confirmation");
+        const trainerMembers = members.filter((m) => m.trainerId === currentTrainer.id);
+        const trainerAlerts = alertItems.filter((a) => members.find((m) => m.id === a.memberId)?.trainerId === currentTrainer.id);
+
+        const searchNormalized = searchQuery.trim().toLowerCase();
+        const compactSearch = searchNormalized.replace(/[^0-9a-z가-힣]/g, "");
+        const memberResults = searchNormalized ? members.filter((m) => m.name.toLowerCase().includes(searchNormalized) || m.phone.replace(/[^0-9]/g, "").includes(compactSearch)) : [];
+        const trainerResults = searchNormalized ? trainers.filter((t) => t.name.toLowerCase().includes(searchNormalized) || t.phone.replace(/[^0-9]/g, "").includes(compactSearch) || t.specialty.toLowerCase().includes(searchNormalized)) : [];
+        const bookingResults = searchNormalized ? bookings.filter((b) => {
+          const member = members.find((m) => m.id === b.memberId);
+          const trainer = trainers.find((t) => t.id === b.trainerId);
+          const hay = `${b.date} ${b.time} ${member?.name || ""} ${trainer?.name || ""} ${b.status}`.toLowerCase();
+          const compact = `${b.date.replace(/-/g, "")} ${b.time.replace(/:/g, "")} ${(member?.phone || "").replace(/[^0-9]/g, "")}`;
+          return hay.includes(searchNormalized) || compact.includes(compactSearch);
+        }) : [];
+
+        const reserveSlot = (date, time) => {
+          if (date < TODAY || date > addDays(TODAY, 21)) return window.alert("예약 가능 기간은 오늘부터 3주 이내입니다.");
+          const exists = bookings.some((b) => b.trainerId === currentMember.trainerId && b.date === date && b.time === time && b.status !== "cancelled");
+          if (exists) return window.alert("이미 예약된 시간입니다.");
+          setBookings((prev) => [...prev, { id: `b${Date.now()}`, trainerId: currentMember.trainerId, memberId: currentMember.id, date, time, status: "requested" }]);
+          setReports((prev) => [{ id: `r${Date.now()}`, memberId: currentMember.id, message: `${formatDateLabel(date)} ${time} 예약 요청이 접수되었습니다.`, createdAt: `${TODAY} 10:00` }, ...prev]);
+        };
+        const cancelBooking = (bookingId) => {
+          const booking = bookings.find((b) => b.id === bookingId);
+          if (!booking) return;
+          if (!canCancel(booking.date, booking.time)) return window.alert("수업 48시간 이내라 센터 문의가 필요합니다.");
+          setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b));
+        };
+        const completeClass = (bookingId) => setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "awaiting_member_confirmation" } : b));
+        const confirmDeduction = (bookingId) => {
+          const booking = bookings.find((b) => b.id === bookingId);
+          if (!booking) return;
+          setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "deducted" } : b));
+          setMembers((prev) => prev.map((m) => m.id === booking.memberId ? { ...m, remainingSessions: Math.max(0, m.remainingSessions - 1) } : m));
+        };
+        const createTrainerBooking = ({ trainerId, memberId, date, time }) => {
+          const exists = bookings.some((b) => b.trainerId === trainerId && b.date === date && b.time === time && b.status !== "cancelled");
+          if (exists) return window.alert("이미 예약된 시간입니다.");
+          setBookings((prev) => [...prev, { id: `b${Date.now()}`, trainerId, memberId, date, time, status: "confirmed" }]);
+        };
+        const trainerCancelBooking = (bookingId) => {
+          const booking = bookings.find((b) => b.id === bookingId);
+          if (!booking || booking.status === "deducted") return;
+          setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b));
+        };
+        const addMember = ({ name, phone, trainerId, totalSessions, firstLessonDate, expiryDate }) => {
+          setMembers((prev) => [...prev, { id: `m${Date.now()}`, name, phone, trainerId, totalSessions, remainingSessions: totalSessions, firstLessonDate, expiryDate }]);
+        };
+        const adminDeleteBooking = (bookingId, reason) => {
+          const booking = bookings.find((b) => b.id === bookingId);
+          if (!booking) return;
+          const member = members.find((m) => m.id === booking.memberId);
+          const trainer = trainers.find((t) => t.id === booking.trainerId);
+          if (booking.status === "deducted") {
+            setMembers((prev) => prev.map((m) => m.id === booking.memberId ? { ...m, remainingSessions: Math.min(m.totalSessions, m.remainingSessions + 1) } : m));
+          }
+          setDeletedBookings((prev) => [{ id: `db${Date.now()}`, bookingId: booking.id, date: booking.date, time: booking.time, trainerName: trainer?.name || "-", memberName: member?.name || "-", previousStatus: booking.status, reason, deletedAt: `${TODAY} 12:00` }, ...prev]);
+          setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+        };
+
+        const role = currentUser.role;
+
+        return (
+          <div className="app-shell">
+            <div className="phone">
+              <div className="top">
+                <div className="title">본앤밸런스</div>
+                <div className="subtitle">GitHub Pages용 단일 파일 앱</div>
+                <div className="chip-row">
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <button key={account.id} className={`chip ${currentUser.id === account.id ? "active" : ""}`} onClick={() => setCurrentUser(account)}>{account.label}</button>
+                  ))}
+                </div>
+                <div className="search-box">
+                  <TextField label="검색" value={searchQuery} onChange={setSearchQuery} placeholder="회원, 강사, 예약 검색" />
+                  {searchNormalized ? (
+                    <div className="search-results">
+                      <div className="search-card"><div className="search-card-title">회원 ({memberResults.length})</div>{memberResults.length === 0 ? <div className="muted" style={{ marginTop: 6 }}>일치하는 회원이 없습니다.</div> : memberResults.slice(0,4).map((m) => <div key={m.id} style={{ marginTop: 6, fontSize: 14 }}>{m.name} · {m.phone}</div>)}</div>
+                      <div className="search-card"><div className="search-card-title">강사 ({trainerResults.length})</div>{trainerResults.length === 0 ? <div className="muted" style={{ marginTop: 6 }}>일치하는 강사가 없습니다.</div> : trainerResults.slice(0,4).map((t) => <div key={t.id} style={{ marginTop: 6, fontSize: 14 }}>{t.name} · {t.specialty}</div>)}</div>
+                      <div className="search-card"><div className="search-card-title">예약 ({bookingResults.length})</div>{bookingResults.length === 0 ? <div className="muted" style={{ marginTop: 6 }}>일치하는 예약이 없습니다.</div> : bookingResults.slice(0,4).map((b) => <div key={b.id} style={{ marginTop: 6, fontSize: 14 }}>{formatDateLabel(b.date)} {b.time} · {getBookingStatusLabel(b.status)}</div>)}</div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+              {role === "member" ? <MemberPage currentMember={currentMember} trainers={trainers} bookings={memberBookings} reports={reports.filter((r) => r.memberId === currentMember.id)} pendingUsages={pendingUsages} alerts={alertItems.filter((a) => a.memberId === currentMember.id)} onReserve={reserveSlot} onCancelBooking={cancelBooking} onConfirmDeduction={confirmDeduction} /> : null}
+              {role === "trainer" ? <TrainerPage trainer={currentTrainer} members={trainerMembers} bookings={bookings.filter((b) => b.trainerId === currentTrainer.id)} alerts={trainerAlerts} onCreateTrainerBooking={createTrainerBooking} onTrainerCancelBooking={trainerCancelBooking} onCompleteClass={completeClass} onAddMember={addMember} /> : null}
+              {role === "admin" ? <AdminPage trainers={trainers} members={members} bookings={bookings} alerts={alertItems} deletedBookings={deletedBookings} onAdminDeleteBooking={adminDeleteBooking} /> : null}
+            </div>
+          </div>
+        );
+      }
+
+      function MemberPage({ currentMember, trainers, bookings, reports, pendingUsages, alerts, onReserve, onCancelBooking, onConfirmDeduction }) {
+        const [selectedDate, setSelectedDate] = useState(TODAY);
+        const [pendingTime, setPendingTime] = useState("");
+        const [confirmOpen, setConfirmOpen] = useState(false);
+        const trainerName = trainers.find((t) => t.id === currentMember.trainerId)?.name || "-";
+        const nextBooking = bookings.filter((b) => ["confirmed","requested"].includes(b.status) && isUpcoming(b.date, b.time)).sort((a,b) => parseDateTime(a.date,a.time) - parseDateTime(b.date,b.time))[0];
+        const expiryDays = getDaysUntilExpiry(currentMember.expiryDate);
+        const slotAvailable = (time) => !bookings.find((b) => b.date === selectedDate && b.time === time && b.status !== "cancelled" && b.status !== "deducted");
+
+        return (
+          <div className="page">
+            <SectionCard title="내 회원권 정보">
+              <div className="grid-2">
+                <div className="info-box"><div className="label">담당 강사</div><div className="value">{trainerName}</div></div>
+                <div className="info-box"><div className="label">총 횟수</div><div className="value">{currentMember.totalSessions}회</div></div>
+                <div className="info-box"><div className="label">다음 수업일</div><div className="value">{nextBooking ? `${formatDateLabel(nextBooking.date)} ${nextBooking.time}` : "없음"}</div></div>
+                <div className={`info-box ${pendingUsages.length > 0 ? "warning" : ""}`}><div className="label">미확인 차감</div><div className="value">{pendingUsages.length}건</div></div>
+                <div className={`info-box ${expiryDays <= 7 ? "danger" : expiryDays <= 30 ? "warning" : ""}`} style={{ gridColumn: "1 / -1" }}>
+                  <div className="label">만료일</div>
+                  <div className="row-between"><div className="value">{currentMember.expiryDate}</div><div className="label" style={{ fontWeight: 700 }}>{expiryDays}일 남음</div></div>
+                </div>
+              </div>
+            </SectionCard>
+            <SectionCard title="알림">
+              {alerts.length === 0 ? <div className="muted">새로운 알림이 없습니다.</div> : alerts.map((alert) => <div key={alert.id} className="alert-box"><div className="alert-title">{alert.title}</div><div className="alert-text">{alert.message}</div></div>)}
+            </SectionCard>
+            <SectionCard title="차감 확인">
+              {pendingUsages.length === 0 ? <div className="muted">확인 대기 중인 수업이 없습니다.</div> : pendingUsages.map((usage) => <div key={usage.id} className="item"><div className="item-title">{formatDateLabel(usage.date)} {usage.time}</div><div className="muted" style={{ marginTop: 4 }}>강사: {trainerName}</div><div style={{ marginTop: 10 }}><ActionButton title="수업 확인하고 차감 확정" full onClick={() => onConfirmDeduction(usage.id)} /></div></div>)}
+            </SectionCard>
+            <SectionCard title="예약 달력" subtitle="회원은 본인 담당 강사의 빈 시간만 확인할 수 있습니다.">
+              <TextField label="날짜" value={selectedDate} onChange={setSelectedDate} type="date" />
+              <div className="slot-grid">
+                {TIME_SLOTS.map((time) => {
+                  const available = slotAvailable(time);
+                  return <button key={time} className={`slot ${available ? "" : "booked"}`} onClick={() => { setPendingTime(time); setConfirmOpen(true); }} disabled={!available}><div className="slot-time">{time}</div><div className="slot-status">{available ? "예약 가능" : "예약 불가"}</div></button>;
+                })}
+              </div>
+            </SectionCard>
+            <SectionCard title="내 예약 관리">
+              {bookings.length === 0 ? <div className="muted">예약된 수업이 없습니다.</div> : bookings.map((booking) => <div key={booking.id} className="item"><div className="item-title">{formatDateLabel(booking.date)} {booking.time}</div><div className="muted" style={{ marginTop: 4 }}>강사: {trainerName}</div><div className="muted" style={{ marginTop: 4 }}>상태: {getBookingStatusLabel(booking.status)}</div><div style={{ marginTop: 10 }}>{canCancel(booking.date, booking.time) ? <ActionButton title="예약 취소" kind="secondary" full onClick={() => onCancelBooking(booking.id)} /> : <div className="soft-box"><div style={{ color: "#be123c", fontSize: 14 }}>수업 48시간 이내라 센터 문의가 필요합니다.</div></div>}</div></div>)}
+            </SectionCard>
+            <SectionCard title="리포트 / 알림">
+              {reports.length === 0 ? <div className="muted">리포트가 없습니다.</div> : reports.map((report) => <div key={report.id} className="soft-box" style={{ marginBottom: 10 }}><div className="item-title">{report.message}</div><div className="muted" style={{ marginTop: 6 }}>{report.createdAt}</div></div>)}
+            </SectionCard>
+            <Modal open={confirmOpen}>
+              <h3>예약 확인</h3>
+              <p>선택한 날짜와 시간으로 예약을 진행할까요?</p>
+              <div className="soft-box"><div className="muted" style={{ color: "#334155" }}>담당 강사: {trainerName}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>날짜: {selectedDate}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>시간: {pendingTime}</div></div>
+              <div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => { setConfirmOpen(false); setPendingTime(""); }} /><ActionButton title="예약하기" onClick={() => { onReserve(selectedDate, pendingTime); setConfirmOpen(false); setPendingTime(""); }} /></div>
+            </Modal>
+          </div>
+        );
+      }
+
+      function TrainerPage({ trainer, members, bookings, alerts, onCreateTrainerBooking, onTrainerCancelBooking, onCompleteClass, onAddMember }) {
+        const [selectedDate, setSelectedDate] = useState(TODAY);
+        const [selectedTime, setSelectedTime] = useState("");
+        const [selectedMemberId, setSelectedMemberId] = useState(members[0]?.id || "");
+        const [createOpen, setCreateOpen] = useState(false);
+        const [confirmOpen, setConfirmOpen] = useState(false);
+        const [confirmAction, setConfirmAction] = useState(null);
+        const [memberModalOpen, setMemberModalOpen] = useState(false);
+        const [memberName, setMemberName] = useState("");
+        const [memberPhone, setMemberPhone] = useState("");
+        const [memberSessions, setMemberSessions] = useState("8");
+        const [firstLessonDate, setFirstLessonDate] = useState(TODAY);
+        const [weekStart, setWeekStart] = useState(getStartOfWeekSunday(selectedDate));
+        const activeMembers = members.filter((m) => getMemberStatus(m) === "active");
+        const availableMemberId = selectedMemberId || activeMembers[0]?.id || "";
+        const dayBookings = bookings.filter((b) => b.date === selectedDate && b.status !== "cancelled");
+        const weekDays = makeDateRange(weekStart, 7);
+        const slotBooking = (time) => dayBookings.find((b) => b.time === time);
+
+        return (
+          <div className="page">
+            <SectionCard title="강사 일일 달력" subtitle={`${trainer.name} · 직접 예약 추가/취소/수업 완료 처리가 가능합니다.`}>
+              <TextField label="날짜" value={selectedDate} onChange={(value) => { setSelectedDate(value); setWeekStart(getStartOfWeekSunday(value)); }} type="date" />
+              {TIME_SLOTS.map((time) => {
+                const booking = slotBooking(time);
+                return <div key={time} className="item"><div className="row-between"><div><div className="item-title">{time}</div>{booking ? <><div className="muted" style={{ marginTop: 4 }}>회원: {members.find((m) => m.id === booking.memberId)?.name || "-"}</div><div className="muted" style={{ marginTop: 4 }}>상태: {getBookingStatusLabel(booking.status)}</div></> : <div className="muted" style={{ marginTop: 4 }}>비어 있음</div>}</div>{booking ? <div style={{ display: "grid", gap: 8, justifyItems: "end" }}><Pill label={getBookingStatusLabel(booking.status)} tone={getTone(booking.status)} />{(booking.status === "confirmed" || booking.status === "requested") && <ActionButton title="수업 완료 처리" onClick={() => onCompleteClass(booking.id)} />}{(booking.status === "confirmed" || booking.status === "requested") && <ActionButton title="예약 취소" kind="secondary" onClick={() => { setConfirmAction({ type: "cancel", payload: { booking } }); setConfirmOpen(true); }} />}</div> : <ActionButton title="예약 추가" kind="secondary" onClick={() => { setSelectedTime(time); setSelectedMemberId(activeMembers[0]?.id || ""); setCreateOpen(true); }} />}</div></div>;
+              })}
+            </SectionCard>
+            <SectionCard title="주간 캘린더" subtitle="일요일부터 토요일 기준으로 1주 단위 확인">
+              <div className="row-between" style={{ marginBottom: 10 }}><ActionButton title="◀" kind="secondary" onClick={() => setWeekStart(addDays(weekStart, -7))} /><ActionButton title="오늘" onClick={() => setWeekStart(getStartOfWeekSunday(TODAY))} /><ActionButton title="▶" kind="secondary" onClick={() => setWeekStart(addDays(weekStart, 7))} /></div>
+              <div className="week-head">{["일","월","화","수","목","금","토"].map((d) => <div key={d}>{d}</div>)}</div>
+              <div className="week-grid">{weekDays.map((day) => { const entries = bookings.filter((b) => b.date === day && b.status !== "cancelled").sort((a,b) => a.time.localeCompare(b.time)); return <div key={day} className={`week-day ${day === TODAY ? "today" : ""}`}><div className="week-label">{formatDateLabel(day)}</div>{entries.length === 0 ? <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8", textAlign: "center" }}>예약 없음</div> : entries.slice(0,3).map((entry) => { const tone = getTone(entry.status); return <div key={entry.id} className="mini-entry" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}><div style={{ fontWeight: 800 }}>{entry.time}</div><div style={{ marginTop: 2 }}>{members.find((m) => m.id === entry.memberId)?.name || "-"}</div></div>; })}{entries.length > 3 ? <div style={{ marginTop: 6, fontSize: 11, color: "#64748b", textAlign: "center" }}>+{entries.length - 3}건 더 있음</div> : null}</div>; })}</div>
+            </SectionCard>
+            <SectionCard title="회원 목록">
+              <div style={{ marginBottom: 12 }}><ActionButton title="회원 등록" full onClick={() => setMemberModalOpen(true)} /></div>
+              {members.map((member) => <div key={member.id} className="item"><div className="row-between"><div style={{ flex: 1 }}><div className="item-title">{member.name}</div><div className="muted" style={{ marginTop: 4 }}>{member.phone}</div><div className="muted" style={{ marginTop: 4 }}>총 {member.totalSessions}회 · 남은 {member.remainingSessions}회 · 만료 {member.expiryDate}</div></div><Pill label={getMemberStatusLabel(member)} tone={getMemberStatusTone(member)} /></div></div>)}
+            </SectionCard>
+            <SectionCard title="회원 알림">
+              {alerts.length === 0 ? <div className="muted">확인할 알림이 없습니다.</div> : alerts.map((alert) => <div key={alert.id} className="alert-box"><div className="alert-title">{alert.title}</div><div className="alert-text">{alert.message}</div></div>)}
+            </SectionCard>
+            <Modal open={createOpen}><h3>강사 직접 예약 추가</h3><p>선택한 시간에 담당 회원을 배정합니다.</p><div className="soft-box"><div className="muted" style={{ color: "#334155" }}>강사: {trainer.name}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>날짜: {selectedDate}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>시간: {selectedTime}</div></div><TextField label="회원 ID" value={availableMemberId} onChange={setSelectedMemberId} placeholder="예: m1" /><div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => setCreateOpen(false)} /><ActionButton title="예약 등록" onClick={() => { if (!availableMemberId) return window.alert("회원 ID를 입력해 주세요."); setConfirmAction({ type: "create", payload: { trainerId: trainer.id, memberId: availableMemberId, date: selectedDate, time: selectedTime } }); setConfirmOpen(true); }} /></div></Modal>
+            <Modal open={confirmOpen}><h3>{confirmAction?.type === "cancel" ? "예약 취소 확인" : "예약 등록 확인"}</h3><p>{confirmAction?.type === "cancel" ? "해당 예약을 취소할까요?" : "선택한 시간에 예약을 등록할까요?"}</p><div className="soft-box">{confirmAction?.type === "cancel" ? <div className="muted" style={{ color: "#334155" }}>{confirmAction?.payload?.booking ? `${formatDateLabel(confirmAction.payload.booking.date)} ${confirmAction.payload.booking.time}` : ""}</div> : <><div className="muted" style={{ color: "#334155" }}>강사: {trainer.name}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>날짜: {selectedDate}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>시간: {selectedTime}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>회원 ID: {availableMemberId}</div></>}</div><div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => { setConfirmOpen(false); setConfirmAction(null); }} /><ActionButton title="확인" onClick={() => { if (confirmAction?.type === "cancel") onTrainerCancelBooking(confirmAction.payload.booking.id); if (confirmAction?.type === "create") onCreateTrainerBooking(confirmAction.payload); setConfirmOpen(false); setConfirmAction(null); setCreateOpen(false); }} /></div></Modal>
+            <Modal open={memberModalOpen}><h3>회원 등록</h3><TextField label="회원 이름" value={memberName} onChange={setMemberName} placeholder="이름" /><TextField label="연락처" value={memberPhone} onChange={(v) => setMemberPhone(formatPhone(v))} placeholder="010-0000-0000" /><div className="row" style={{ marginBottom: 12 }}>{[8,22,57].map((n) => <ActionButton key={n} title={`${n}회`} kind="secondary" onClick={() => setMemberSessions(String(n))} />)}</div><TextField label="횟수권" value={memberSessions} onChange={setMemberSessions} type="number" /><TextField label="첫 수업일" value={firstLessonDate} onChange={setFirstLessonDate} type="date" /><div className="soft-box"><div className="muted" style={{ color: "#334155" }}>예상 만료일: {addOneYear(firstLessonDate || TODAY)}</div></div><div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => setMemberModalOpen(false)} /><ActionButton title="저장" onClick={() => { const total = Number(memberSessions); const digits = memberPhone.replace(/[^0-9]/g, ""); if (!memberName.trim()) return window.alert("회원 이름을 입력해 주세요."); if (digits.length < 10 || digits.length > 11) return window.alert("올바른 연락처를 입력해 주세요."); if (!Number.isInteger(total) || total < 1 || total > 57) return window.alert("횟수권은 1회부터 57회까지 입력해 주세요."); if (!firstLessonDate) return window.alert("첫 수업일을 입력해 주세요."); onAddMember({ name: memberName.trim(), phone: memberPhone, trainerId: trainer.id, totalSessions: total, firstLessonDate, expiryDate: addOneYear(firstLessonDate) }); setMemberModalOpen(false); setMemberName(""); setMemberPhone(""); setMemberSessions("8"); setFirstLessonDate(TODAY); }} /></div></Modal>
+          </div>
+        );
+      }
+
+      function AdminPage({ trainers, members, bookings, alerts, deletedBookings, onAdminDeleteBooking }) {
+        const [deleteOpen, setDeleteOpen] = useState(false);
+        const [deleteTarget, setDeleteTarget] = useState(null);
+        const [deleteReason, setDeleteReason] = useState("");
+        const [expandedTrainerId, setExpandedTrainerId] = useState(null);
+        const allMembersRef = useRef(null);
+        const todayBookingsRef = useRef(null);
+        const awaitingRef = useRef(null);
+        const attentionRef = useRef(null);
+        const bookingSummary = {
+          requested: bookings.filter((b) => b.status === "requested").length,
+          confirmed: bookings.filter((b) => b.status === "confirmed").length,
+          awaiting: bookings.filter((b) => b.status === "awaiting_member_confirmation").length,
+          deducted: bookings.filter((b) => b.status === "deducted").length,
+        };
+        const expiringSoon = members.filter((m) => getMemberStatus(m) === "active" && (m.remainingSessions <= 5 || getDaysUntilExpiry(m.expiryDate) <= 30));
+        const expiredMembers = members.filter((m) => getMemberStatus(m) === "expired");
+        const completedMembers = members.filter((m) => getMemberStatus(m) === "completed");
+        const summaryCards = [
+          { title: "전체 회원", value: `${members.length}명`, onClick: () => allMembersRef.current?.scrollIntoView({ behavior: "smooth" }) },
+          { title: "오늘 예약", value: `${bookings.filter((b) => b.date === TODAY && b.status !== "cancelled").length}건`, onClick: () => todayBookingsRef.current?.scrollIntoView({ behavior: "smooth" }) },
+          { title: "차감 대기", value: `${bookings.filter((b) => b.status === "awaiting_member_confirmation").length}건`, onClick: () => awaitingRef.current?.scrollIntoView({ behavior: "smooth" }) },
+          { title: "주의 회원", value: `${expiringSoon.length}명`, onClick: () => attentionRef.current?.scrollIntoView({ behavior: "smooth" }) },
+        ];
+        return (
+          <div className="page">
+            <SectionCard title="관리자 요약">
+              <div className="summary-grid">{summaryCards.map((card) => <button key={card.title} className="summary-btn" onClick={card.onClick}><div className="label">{card.title}</div><div className="summary-value">{card.value}</div></button>)}</div>
+            </SectionCard>
+            <SectionCard title="예약 상태 요약"><div className="grid-2"><div className="info-box"><div className="label">예약 요청</div><div className="value" style={{ color: "#6d28d9" }}>{bookingSummary.requested}건</div></div><div className="info-box"><div className="label">예약 확정</div><div className="value" style={{ color: "#2563eb" }}>{bookingSummary.confirmed}건</div></div><div className="info-box warning"><div className="label">회원 확인 대기</div><div className="value" style={{ color: "#b45309" }}>{bookingSummary.awaiting}건</div></div><div className="info-box"><div className="label">차감 완료</div><div className="value" style={{ color: "#059669" }}>{bookingSummary.deducted}건</div></div></div></SectionCard>
+            <SectionCard title="강사별 회원 현황" subtitle="강사 이름 클릭 시 회원 내용을 한 줄로 확인" innerRef={allMembersRef}>{trainers.map((trainer) => { const trainerMembers = members.filter((m) => m.trainerId === trainer.id); const expanded = expandedTrainerId === trainer.id; return <div key={trainer.id} className="item"><div className="row-between"><button onClick={() => setExpandedTrainerId(expanded ? null : trainer.id)} style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", flex: 1 }}><div className="item-title">{trainer.name}</div><div className="muted" style={{ marginTop: 4 }}>회원 수 {trainerMembers.length}명</div><div className="muted" style={{ marginTop: 4, fontSize: 12 }}>{trainer.phone} · {trainer.specialty}</div></button><ActionButton title={expanded ? "접기" : "열기"} kind="secondary" onClick={() => setExpandedTrainerId(expanded ? null : trainer.id)} /></div>{expanded ? <div style={{ marginTop: 12 }}><div className="trainer-table-head"><div>상태</div><div>성명</div><div>연락처</div><div>최초수업일</div><div>마지막수업일</div><div>사용횟수</div><div>잔여횟수</div></div>{trainerMembers.map((member) => <div key={member.id} className="trainer-table-row"><div><Pill label={getMemberStatusLabel(member)} tone={getMemberStatusTone(member)} /></div><div>{member.name}</div><div>{member.phone}</div><div>{member.firstLessonDate}</div><div>{getLastLessonDate(member.id, bookings)}</div><div>{getUsedSessions(member)}회</div><div>{member.remainingSessions}회</div></div>)}</div> : null}</div>; })}</SectionCard>
+            <SectionCard title="차감 대기 목록" innerRef={awaitingRef}>{bookings.filter((b) => b.status === "awaiting_member_confirmation").length === 0 ? <div className="muted">차감 대기 예약이 없습니다.</div> : bookings.filter((b) => b.status === "awaiting_member_confirmation").map((booking) => { const member = members.find((m) => m.id === booking.memberId); const trainer = trainers.find((t) => t.id === booking.trainerId); return <div key={booking.id} className="alert-box"><div className="alert-title">{formatDateLabel(booking.date)} {booking.time}</div><div className="alert-text">회원: {member?.name || "-"}</div><div className="alert-text">강사: {trainer?.name || "-"}</div></div>; })}</SectionCard>
+            <SectionCard title="자동 알림">{alerts.length === 0 ? <div className="muted">현재 자동 알림 대상이 없습니다.</div> : alerts.map((alert) => <div key={alert.id} className="alert-box"><div className="alert-title">{alert.title}</div><div className="alert-text">{alert.message}</div><div className="alert-text" style={{ fontSize: 12 }}>담당 강사: {alert.trainerName}</div></div>)}</SectionCard>
+            <SectionCard title="오늘 예약 / 최근 예약" innerRef={todayBookingsRef}>{bookings.slice().sort((a,b) => parseDateTime(b.date,b.time) - parseDateTime(a.date,a.time)).map((booking) => { const member = members.find((m) => m.id === booking.memberId); const trainer = trainers.find((t) => t.id === booking.trainerId); return <div key={booking.id} className="item"><div className="row-between"><div><div className="item-title">{formatDateLabel(booking.date)} {booking.time}</div><div className="muted" style={{ marginTop: 4 }}>강사: {trainer?.name || "-"}</div><div className="muted" style={{ marginTop: 4 }}>회원: {member?.name || "-"}</div><div className="muted" style={{ marginTop: 4 }}>상태: {getBookingStatusLabel(booking.status)}</div></div><ActionButton title="수업 삭제" kind="secondary" onClick={() => { setDeleteTarget(booking); setDeleteOpen(true); }} /></div></div>; })}</SectionCard>
+            <SectionCard title="예약 삭제 이력">{deletedBookings.length === 0 ? <div className="muted">삭제 이력이 없습니다.</div> : deletedBookings.map((deleted) => <div key={deleted.id} className="soft-box" style={{ marginBottom: 10 }}><div className="item-title">{formatDateLabel(deleted.date)} {deleted.time}</div><div className="muted" style={{ marginTop: 4 }}>강사: {deleted.trainerName}</div><div className="muted" style={{ marginTop: 4 }}>회원: {deleted.memberName}</div><div className="muted" style={{ marginTop: 4 }}>이전 상태: {getBookingStatusLabel(deleted.previousStatus)}</div><div className="muted" style={{ marginTop: 4, color: "#334155" }}>삭제 사유: {deleted.reason}</div><div className="muted" style={{ marginTop: 4, fontSize: 12 }}>삭제 시각: {deleted.deletedAt}</div></div>)}</SectionCard>
+            <SectionCard title="만료 회원">{expiredMembers.length === 0 ? <div className="muted">만료된 회원이 없습니다.</div> : expiredMembers.map((member) => <div key={member.id} className="alert-box" style={{ background: "#fff1f2", borderColor: "#fda4af" }}><div className="alert-title" style={{ color: "#be123c" }}>{member.name}</div><div className="alert-text" style={{ color: "#be123c" }}>만료일: {member.expiryDate}</div></div>)}</SectionCard>
+            <SectionCard title="사용완료 회원">{completedMembers.length === 0 ? <div className="muted">사용완료된 회원이 없습니다.</div> : completedMembers.map((member) => <div key={member.id} className="alert-box"><div className="alert-title">{member.name}</div><div className="alert-text">잔여 횟수: {member.remainingSessions}회</div></div>)}</SectionCard>
+            <SectionCard title="만료 / 소진 주의" innerRef={attentionRef}>{expiringSoon.length === 0 ? <div className="muted">주의 대상 회원이 없습니다.</div> : expiringSoon.map((member) => <div key={member.id} className="alert-box"><div className="alert-title">{member.name}</div><div className="alert-text">남은 횟수: {member.remainingSessions}회</div><div className="alert-text">만료일: {member.expiryDate}</div></div>)}</SectionCard>
+            <Modal open={deleteOpen}><h3>수업 삭제 확인</h3><p>삭제 사유를 입력해야 수업을 삭제할 수 있습니다.</p><div className="soft-box"><div className="muted" style={{ color: "#334155" }}>{deleteTarget ? `${formatDateLabel(deleteTarget.date)} ${deleteTarget.time}` : ""}</div></div><TextField label="삭제 사유" value={deleteReason} onChange={setDeleteReason} placeholder="예: 강사 입력 실수" /><div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => { setDeleteOpen(false); setDeleteReason(""); setDeleteTarget(null); }} /><ActionButton title="삭제하기" onClick={() => { if (!deleteReason.trim()) return window.alert("삭제 사유를 입력해 주세요."); onAdminDeleteBooking(deleteTarget.id, deleteReason.trim()); setDeleteOpen(false); setDeleteReason(""); setDeleteTarget(null); }} /></div></Modal>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
