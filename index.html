@@ -604,10 +604,31 @@
                 return <div key={time} className="item"><div className="row-between"><div><div className="item-title">{time}</div>{booking ? <><div className="muted" style={{ marginTop: 4 }}>회원: {members.find((m) => m.id === booking.memberId)?.name || "-"}</div><div className="muted" style={{ marginTop: 4 }}>상태: {getBookingStatusLabel(booking.status)}</div></> : <div className="muted" style={{ marginTop: 4 }}>비어 있음</div>}</div>{booking ? <div style={{ display: "grid", gap: 8, justifyItems: "end" }}><Pill label={getBookingStatusLabel(booking.status)} tone={getTone(booking.status)} />{(booking.status === "confirmed" || booking.status === "requested") && <ActionButton title="수업 완료 처리" onClick={() => onCompleteClass(booking.id)} />}{(booking.status === "confirmed" || booking.status === "requested") && <ActionButton title="예약 취소" kind="secondary" onClick={() => { setConfirmAction({ type: "cancel", payload: { booking } }); setConfirmOpen(true); }} />}</div> : <ActionButton title="예약 추가" kind="secondary" onClick={() => { setSelectedTime(time); setSelectedMemberId(activeMembers[0]?.id || ""); setCreateOpen(true); }} />}</div></div>;
               })}
             </SectionCard>
-            <SectionCard title="주간 캘린더" subtitle="일요일부터 토요일 기준으로 1주 단위 확인">
-              <div className="row-between" style={{ marginBottom: 10 }}><ActionButton title="◀" kind="secondary" onClick={() => setWeekStart(addDays(weekStart, -7))} /><ActionButton title="오늘" onClick={() => setWeekStart(getStartOfWeekSunday(TODAY))} /><ActionButton title="▶" kind="secondary" onClick={() => setWeekStart(addDays(weekStart, 7))} /></div>
-              <div className="week-head">{["일","월","화","수","목","금","토"].map((d) => <div key={d}>{d}</div>)}</div>
-              <div className="week-grid">{weekDays.map((day) => { const entries = bookings.filter((b) => b.date === day && b.status !== "cancelled").sort((a,b) => a.time.localeCompare(b.time)); return <div key={day} className={`week-day ${day === TODAY ? "today" : ""}`}><div className="week-label">{formatDateLabel(day)}</div>{entries.length === 0 ? <div style={{ marginTop: 8, fontSize: 11, color: "#94a3b8", textAlign: "center" }}>예약 없음</div> : entries.slice(0,3).map((entry) => { const tone = getTone(entry.status); return <div key={entry.id} className="mini-entry" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}><div style={{ fontWeight: 800 }}>{entry.time}</div><div style={{ marginTop: 2 }}>{members.find((m) => m.id === entry.memberId)?.name || "-"}</div></div>; })}{entries.length > 3 ? <div style={{ marginTop: 6, fontSize: 11, color: "#64748b", textAlign: "center" }}>+{entries.length - 3}건 더 있음</div> : null}</div>; })}</div>
+            <SectionCard title="일일 캘린더" subtitle="선택한 하루 기준으로 예약을 확인">
+              <TextField label="날짜" value={selectedDate} onChange={(value) => setSelectedDate(value)} type="date" />
+              <div className="section-gap">
+                {bookings.filter((b) => b.date === selectedDate && b.status !== "cancelled").length === 0 ? (
+                  <div className="muted">해당 날짜에 예약이 없습니다.</div>
+                ) : (
+                  bookings
+                    .filter((b) => b.date === selectedDate && b.status !== "cancelled")
+                    .sort((a, b) => a.time.localeCompare(b.time))
+                    .map((entry) => {
+                      const tone = getTone(entry.status);
+                      return (
+                        <div key={entry.id} className="item" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}>
+                          <div className="item-title">{entry.time}</div>
+                          <div className="muted" style={{ marginTop: 4 }}>
+                            {members.find((m) => m.id === entry.memberId)?.name || "-"}
+                          </div>
+                          <div className="muted" style={{ marginTop: 4 }}>
+                            상태: {getBookingStatusLabel(entry.status)}
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
             </SectionCard>
             <SectionCard title="회원 목록">
               <div style={{ marginBottom: 12 }}><ActionButton title="회원 등록" full onClick={() => setMemberModalOpen(true)} /></div>
