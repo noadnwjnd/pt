@@ -1,693 +1,2954 @@
-<!doctype html>
-<html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>본앤밸런스 PT 관리</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-      * { box-sizing: border-box; }
-      html, body, #root { margin: 0; min-height: 100%; }
-      body {
-        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
-        color: #0f172a;
-      }
-      button, input { font: inherit; }
-      .app-shell {
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        padding: 20px;
-      }
-      .phone {
-        width: 100%;
-        max-width: 460px;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 28px;
-        overflow: hidden;
-        box-shadow: 0 12px 36px rgba(15,23,42,0.12);
-      }
-      .top {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: rgba(255,255,255,0.95);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid #e2e8f0;
-        padding: 18px;
-      }
-      .title { font-size: 28px; font-weight: 900; }
-      .subtitle { margin-top: 4px; color: #64748b; font-size: 13px; }
-      .chip-row { display: flex; gap: 8px; overflow-x: auto; margin-top: 12px; padding-bottom: 4px; }
-      .chip {
-        border: none;
-        border-radius: 999px;
-        padding: 10px 14px;
-        font-weight: 800;
-        white-space: nowrap;
-        cursor: pointer;
-        background: #e2e8f0;
-        color: #334155;
-      }
-      .chip.active { background: #0f172a; color: #fff; }
-      .page { display: grid; gap: 14px; padding: 16px; }
-      .card {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 22px;
-        padding: 16px;
-      }
-      .card h3 { margin: 0; font-size: 19px; font-weight: 800; }
-      .card .card-sub { margin-top: 4px; margin-bottom: 0; color: #64748b; font-size: 13px; }
-      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .info-box {
-        min-height: 102px;
-        border-radius: 18px;
-        padding: 14px;
-        border: 1px solid #e2e8f0;
-        background: #f8fafc;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-      .info-box.warning { background: #fffbeb; border-color: #fcd34d; }
-      .info-box.danger { background: #fff1f2; border-color: #fda4af; }
-      .label { font-size: 13px; color: #64748b; }
-      .value { font-size: 18px; font-weight: 800; margin-top: 4px; }
-      .muted { color: #64748b; font-size: 14px; }
-      .section-gap { margin-top: 12px; }
-      .item {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 14px;
-        margin-bottom: 10px;
-      }
-      .item-title { font-weight: 800; }
-      .row { display: flex; gap: 10px; }
-      .row-between { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-      .btn {
-        border: none;
-        border-radius: 14px;
-        min-height: 44px;
-        padding: 0 14px;
-        font-weight: 800;
-        cursor: pointer;
-        background: #0f172a;
-        color: #fff;
-      }
-      .btn.secondary {
-        background: #fff;
-        color: #334155;
-        border: 1px solid #cbd5e1;
-      }
-      .btn.full { width: 100%; }
-      .input {
-        width: 100%;
-        border: 1px solid #dbe2ea;
-        border-radius: 14px;
-        padding: 12px 14px;
-        font-size: 14px;
-        outline: none;
-      }
-      .field { margin-bottom: 12px; }
-      .field label { display: block; margin-bottom: 6px; font-size: 13px; color: #475569; font-weight: 700; }
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 800;
-        border: 1px solid #cbd5e1;
-        background: #f8fafc;
-        color: #334155;
-      }
-      .slot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-      .slot {
-        border-radius: 16px;
-        border: 1px solid #86efac;
-        background: #ecfdf5;
-        padding: 12px;
-        cursor: pointer;
-      }
-      .slot.booked {
-        border-color: #cbd5e1;
-        background: #f1f5f9;
-        cursor: not-allowed;
-        opacity: 0.75;
-      }
-      .slot-time { font-weight: 800; }
-      .slot-status { margin-top: 4px; font-size: 12px; }
-      .alert-box {
-        background: #fffbeb;
-        border: 1px solid #fcd34d;
-        border-radius: 16px;
-        padding: 14px;
-        margin-bottom: 10px;
-      }
-      .alert-title { font-weight: 800; color: #92400e; }
-      .alert-text { margin-top: 6px; color: #92400e; font-size: 14px; }
-      .soft-box {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 14px;
-      }
-      .overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(15,23,42,0.35);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 18px;
-        z-index: 50;
-      }
-      .modal {
-        width: 100%;
-        max-width: 400px;
-        background: #fff;
-        border-radius: 24px;
-        border: 1px solid #e2e8f0;
-        padding: 18px;
-      }
-      .modal h3 { margin: 0; font-size: 20px; font-weight: 800; }
-      .modal p { margin-top: 4px; color: #64748b; font-size: 13px; }
-      .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
-      .week-head { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
-      .week-head div { text-align: center; font-size: 12px; color: #64748b; font-weight: 700; }
-      .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-      .week-day {
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        min-height: 150px;
-        padding: 8px;
-        background: #fff;
-      }
-      .week-day.today { border: 2px solid #3b82f6; }
-      .week-label { text-align: center; font-size: 12px; font-weight: 800; }
-      .mini-entry {
-        margin-top: 6px;
-        border-radius: 10px;
-        padding: 6px;
-        font-size: 11px;
-      }
-      .search-box { margin-top: 12px; }
-      .search-results { display: grid; gap: 10px; margin-top: 10px; }
-      .search-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 14px;
-      }
-      .search-card-title { font-weight: 800; }
-      .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .summary-btn {
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 14px;
-        background: #f8fafc;
-        cursor: pointer;
-        text-align: left;
-      }
-      .summary-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
-      .trainer-table-head, .trainer-table-row {
-        display: grid;
-        grid-template-columns: 0.9fr 0.9fr 1.2fr 1fr 1fr 0.8fr 0.8fr;
-        gap: 8px;
-        font-size: 12px;
-        align-items: center;
-      }
-      .trainer-table-head { color: #64748b; font-weight: 700; }
-      .trainer-table-row { margin-top: 8px; }
-      @media (max-width: 520px) {
-        .app-shell { padding: 0; }
-        .phone { border-radius: 0; max-width: none; min-height: 100vh; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="text/babel">
-      const { useMemo, useRef, useState } = React;
+import React, { useMemo, useState } from "react";
 
-      const TODAY = (() => {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, "0");
-        const d = String(now.getDate()).padStart(2, "0");
-        return `${y}-${m}-${d}`;
-      })();
-      const NOW = new Date();
-      const TIME_SLOTS = [
-        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-        "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-        "18:00", "18:30", "19:00", "19:30", "20:00",
-      ];
+const ROLE_LABELS = {
+  member: "회원",
+  trainer: "강사",
+  admin: "관리자",
+};
 
-      function formatDateValue(date) {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, "0");
-        const d = String(date.getDate()).padStart(2, "0");
-        return `${y}-${m}-${d}`;
-      }
-      function parseDate(dateString) {
-        const [y, m, d] = dateString.split("-").map(Number);
-        return new Date(y, m - 1, d);
-      }
-      function parseDateTime(date, time) {
-        const [y, m, d] = date.split("-").map(Number);
-        const [hh, mm] = time.split(":").map(Number);
-        return new Date(y, m - 1, d, hh, mm, 0);
-      }
-      function addDays(dateString, days) {
-        const date = parseDate(dateString);
-        date.setDate(date.getDate() + days);
-        return formatDateValue(date);
-      }
-      function addOneYear(dateString) {
-        const date = parseDate(dateString);
-        date.setFullYear(date.getFullYear() + 1);
-        return formatDateValue(date);
-      }
-      function formatDateLabel(dateString) {
-        const date = parseDate(dateString);
-        return `${date.getMonth() + 1}월 ${date.getDate()}일`;
-      }
-      function getStartOfWeekSunday(dateString) {
-        const date = parseDate(dateString);
-        date.setDate(date.getDate() - date.getDay());
-        return formatDateValue(date);
-      }
-      function makeDateRange(startDate, days) {
-        return Array.from({ length: days }, (_, i) => addDays(startDate, i));
-      }
-      function formatPhone(value) {
-        const numbers = value.replace(/[^0-9]/g, "").slice(0, 11);
-        if (numbers.length < 4) return numbers;
-        if (numbers.length < 8) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-        return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
-      }
-      function isUpcoming(date, time) {
-        return parseDateTime(date, time).getTime() >= NOW.getTime();
-      }
-      function canCancel(date, time) {
-        const diffHours = (parseDateTime(date, time).getTime() - NOW.getTime()) / (1000 * 60 * 60);
-        return diffHours >= 48;
-      }
-      function getBookingStatusLabel(status) {
-        return {
-          requested: "예약 요청",
-          confirmed: "예약 확정",
-          awaiting_member_confirmation: "회원 확인 대기",
-          deducted: "차감 완료",
-          cancelled: "취소됨",
-        }[status] || status;
-      }
-      function getTone(status) {
-        return {
-          requested: { bg: "#f5f3ff", border: "#c4b5fd", text: "#6d28d9" },
-          confirmed: { bg: "#eff6ff", border: "#93c5fd", text: "#1d4ed8" },
-          awaiting_member_confirmation: { bg: "#fffbeb", border: "#fcd34d", text: "#b45309" },
-          deducted: { bg: "#ecfdf5", border: "#86efac", text: "#047857" },
-          cancelled: { bg: "#fff1f2", border: "#fda4af", text: "#be123c" },
-        }[status] || { bg: "#f8fafc", border: "#cbd5e1", text: "#334155" };
-      }
-      function getMemberStatus(member) {
-        if (member.expiryDate < TODAY) return "expired";
-        if (member.remainingSessions <= 0) return "completed";
-        return "active";
-      }
-      function getMemberStatusLabel(member) {
-        return { active: "사용중", expired: "만료", completed: "사용완료" }[getMemberStatus(member)];
-      }
-      function getMemberStatusTone(member) {
-        const status = getMemberStatus(member);
-        return {
-          active: { bg: "#ecfdf5", border: "#86efac", text: "#047857" },
-          expired: { bg: "#fff1f2", border: "#fda4af", text: "#be123c" },
-          completed: { bg: "#fffbeb", border: "#fcd34d", text: "#b45309" },
-        }[status];
-      }
-      function getDaysUntilExpiry(expiryDate) {
-        return Math.floor((parseDate(expiryDate).getTime() - parseDate(TODAY).getTime()) / (1000 * 60 * 60 * 24));
-      }
-      function getLastLessonDate(memberId, bookings) {
-        const completed = bookings.filter((b) => b.memberId === memberId && b.status === "deducted").sort((a, b) => parseDateTime(b.date, b.time) - parseDateTime(a.date, a.time));
-        return completed[0] ? `${completed[0].date} ${completed[0].time}` : "없음";
-      }
-      function getUsedSessions(member) {
-        return Math.max(0, member.totalSessions - member.remainingSessions);
-      }
-      function getAlertItems(members, trainers, bookings) {
-        return members.flatMap((member) => {
-          const trainer = trainers.find((t) => t.id === member.trainerId);
-          const items = [];
-          const daysUntilExpiry = getDaysUntilExpiry(member.expiryDate);
-          if (daysUntilExpiry >= 0 && daysUntilExpiry <= 30) {
-            items.push({ id: `${member.id}-expiry`, memberId: member.id, trainerName: trainer?.name || "-", title: "만료 임박", message: `${member.name} 회원의 만료일까지 ${daysUntilExpiry}일 남았습니다.` });
-          }
-          if (member.remainingSessions > 0 && member.remainingSessions <= 3) {
-            items.push({ id: `${member.id}-remaining`, memberId: member.id, trainerName: trainer?.name || "-", title: "잔여 횟수 부족", message: `${member.name} 회원의 잔여 횟수가 ${member.remainingSessions}회 남았습니다.` });
-          }
-          return items;
-        });
-      }
+const SESSION_STATUS = {
+  REQUESTED: "예약요청",
+  CONFIRMED: "예약확정",
+  WAITING_MEMBER_CONFIRM: "차감대기_회원확인필요",
+  DEDUCTED: "차감완료",
+  CANCELED: "예약취소",
+};
 
-      const DEMO_ACCOUNTS = [
-        { id: "member-noah", role: "member", label: "노아 회원", memberId: "m1" },
-        { id: "trainer-kim", role: "trainer", label: "김트레이너", trainerId: "t1" },
-        { id: "admin", role: "admin", label: "센터 관리자" },
-      ];
-      const INITIAL_TRAINERS = [
-        { id: "t1", name: "김트레이너", phone: "010-9000-1111", specialty: "체형교정" },
-        { id: "t2", name: "박트레이너", phone: "010-9000-2222", specialty: "다이어트" },
-        { id: "t3", name: "이트레이너", phone: "010-9000-3333", specialty: "근력증가" },
-      ];
-      const INITIAL_MEMBERS = [
-        { id: "m1", name: "노아", phone: "010-1111-2222", trainerId: "t1", totalSessions: 22, remainingSessions: 17, firstLessonDate: addDays(TODAY, -3), expiryDate: addOneYear(addDays(TODAY, -3)) },
-        { id: "m2", name: "민지", phone: "010-3333-4444", trainerId: "t2", totalSessions: 8, remainingSessions: 4, firstLessonDate: addDays(TODAY, -5), expiryDate: addOneYear(addDays(TODAY, -5)) },
-        { id: "m3", name: "수현", phone: "010-5555-6666", trainerId: "t1", totalSessions: 57, remainingSessions: 56, firstLessonDate: addDays(TODAY, -2), expiryDate: addOneYear(addDays(TODAY, -2)) },
-      ];
-      const INITIAL_BOOKINGS = [
-        { id: "b1", trainerId: "t1", memberId: "m1", date: TODAY, time: "10:00", status: "confirmed" },
-        { id: "b2", trainerId: "t1", memberId: "m3", date: TODAY, time: "13:00", status: "awaiting_member_confirmation" },
-        { id: "b3", trainerId: "t2", memberId: "m2", date: TODAY, time: "11:00", status: "confirmed" },
-        { id: "b4", trainerId: "t1", memberId: "m1", date: addDays(TODAY, 1), time: "09:00", status: "confirmed" },
-        { id: "b5", trainerId: "t1", memberId: "m3", date: addDays(TODAY, 2), time: "15:00", status: "confirmed" },
-        { id: "b6", trainerId: "t2", memberId: "m2", date: addDays(TODAY, 5), time: "18:00", status: "confirmed" },
-      ];
-      const INITIAL_REPORTS = [
-        { id: "r1", memberId: "m1", message: "최근 수업 기록이 반영되었습니다. 남은 횟수를 확인해 주세요.", createdAt: `${TODAY} 12:10` },
-      ];
+const SAMPLE_USERS = {
+  member: {
+    id: "member_noah",
+    name: "노아 회원",
+    role: "member",
+    trainerName: "김트레이너",
+    totalSessions: 22,
+    usedSessions: 6.5,
+    firstLessonDate: "2026-04-10",
+    nextLessonDate: "2026-04-29 10:00",
+  },
+  trainer: {
+    id: "trainer_kim",
+    name: "김트레이너",
+    role: "trainer",
+  },
+  admin: {
+    id: "admin_main",
+    name: "관리자",
+    role: "admin",
+  },
+};
 
-      function ActionButton({ title, onClick, kind = "primary", full = false }) {
-        return <button type="button" onClick={onClick} className={`btn ${kind === "secondary" ? "secondary" : ""} ${full ? "full" : ""}`}>{title}</button>;
-      }
-      function TextField({ label, value, onChange, placeholder, type = "text" }) {
-        return (
-          <div className="field">
-            <label>{label}</label>
-            <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} type={type} />
+const SAMPLE_ADMINS = [
+  {
+    id: "admin_main",
+    name: "관리자",
+    loginId: "admin",
+    password: "a123456",
+    isHidden: false,
+  },
+];
+
+const SAMPLE_TRAINERS = [
+  {
+    id: "trainer_kim",
+    name: "김트레이너",
+    loginId: "trainer_kim",
+    initialPassword: "a123456",
+    phone: "010-1111-2222",
+    isHidden: false,
+  },
+  {
+    id: "trainer_lee",
+    name: "이강사",
+    loginId: "trainer_lee",
+    initialPassword: "a123456",
+    phone: "010-3333-4444",
+    isHidden: false,
+  },
+];
+
+const SAMPLE_MEMBERS = [
+  {
+    id: "m1",
+    name: "노아 회원",
+    trainerName: "김트레이너",
+    phone: "010-1234-5678",
+    address: "서울시 강남구",
+    firstLessonDate: "2026-04-10",
+    totalSessions: 22,
+    usedSessions: 6.5,
+    nextLessonDate: "2026-04-29 10:00",
+    authCode: "PT123456",
+    password: "a123456",
+    isHidden: false,
+  },
+  {
+    id: "m2",
+    name: "김민지",
+    trainerName: "김트레이너",
+    phone: "010-2222-3333",
+    address: "서울시 송파구",
+    firstLessonDate: "2025-05-03",
+    totalSessions: 8,
+    usedSessions: 6,
+    nextLessonDate: "2026-04-30 14:00",
+    authCode: "PT222333",
+    password: "a123456",
+    isHidden: false,
+  },
+  {
+    id: "m3",
+    name: "박지훈",
+    trainerName: "이강사",
+    phone: "010-4444-5555",
+    address: "서울시 서초구",
+    firstLessonDate: "2025-04-01",
+    totalSessions: 57,
+    usedSessions: 57,
+    nextLessonDate: null,
+    authCode: "PT444555",
+    password: "a123456",
+    isHidden: false,
+  },
+];
+
+const INITIAL_RESERVATIONS = [
+  {
+    id: "r1",
+    memberName: "노아 회원",
+    trainerName: "김트레이너",
+    date: "2026-04-29",
+    time: "10:00",
+    durationMinutes: 60,
+    status: SESSION_STATUS.CONFIRMED,
+  },
+  {
+    id: "r2",
+    memberName: "김민지",
+    trainerName: "김트레이너",
+    date: "2026-04-30",
+    time: "14:00",
+    durationMinutes: 30,
+    status: SESSION_STATUS.REQUESTED,
+  },
+  {
+    id: "r3",
+    memberName: "최서준",
+    trainerName: "이강사",
+    date: "2026-04-27",
+    time: "18:00",
+    durationMinutes: 60,
+    status: SESSION_STATUS.WAITING_MEMBER_CONFIRM,
+  },
+];
+
+function makeDate(year, month, day) {
+  return new Date(year, month - 1, day);
+}
+
+function parseDate(dateString) {
+  if (!dateString) return null;
+  const parts = String(dateString).split("-").map(Number);
+  if (parts.length !== 3) return null;
+  const date = makeDate(parts[0], parts[1], parts[2]);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+function toDateOnly(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return year + "-" + month + "-" + day;
+}
+
+function formatKoreanDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "날짜 없음";
+  const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+  return date.getFullYear() + "년 " + (date.getMonth() + 1) + "월 " + date.getDate() + "일 " + weekdays[date.getDay()];
+}
+
+function addDays(date, days) {
+  const copy = new Date(date.getTime());
+  copy.setDate(copy.getDate() + days);
+  return copy;
+}
+
+function addOneYear(dateString) {
+  const date = parseDate(dateString);
+  if (!date) return "";
+  date.setFullYear(date.getFullYear() + 1);
+  return toDateOnly(date);
+}
+
+function getRemainingSessions(member) {
+  const total = Number(member && member.totalSessions ? member.totalSessions : 0);
+  const used = Number(member && member.usedSessions ? member.usedSessions : 0);
+  const remaining = total - used;
+  return remaining > 0 ? remaining : 0;
+}
+
+function getMemberByName(members, memberName) {
+  return members.find(function (member) {
+    return member.name === memberName && !member.isHidden;
+  }) || null;
+}
+
+function getDeductionByDuration(durationMinutes) {
+  const duration = Number(durationMinutes);
+  if (duration === 60) return 1;
+  if (duration === 30) return 0.5;
+  return 0;
+}
+
+function isWithinThreeWeeks(dateString, today) {
+  const target = parseDate(dateString);
+  if (!target) return false;
+  const start = parseDate(toDateOnly(today));
+  const end = addDays(start, 21);
+  return target >= start && target <= end;
+}
+
+function getWeekRangeSundayToSaturday(dateString) {
+  const date = parseDate(dateString);
+  if (!date) return { start: "", end: "" };
+  const start = new Date(date.getTime());
+  start.setDate(date.getDate() - date.getDay());
+  const end = new Date(start.getTime());
+  end.setDate(start.getDate() + 6);
+  return { start: toDateOnly(start), end: toDateOnly(end) };
+}
+
+function isDateInRange(dateString, startString, endString) {
+  return Boolean(dateString) && dateString >= startString && dateString <= endString;
+}
+
+function getWeekLabel(range) {
+  if (!range || !range.start || !range.end) return "주차 없음";
+  return range.start + " ~ " + range.end;
+}
+
+function getWeekOffsetRange(today, offset) {
+  const base = addDays(today, offset * 7);
+  return getWeekRangeSundayToSaturday(toDateOnly(base));
+}
+
+function isCurrentWeekOffset(offset) {
+  return Number(offset) === 0;
+}
+
+function timeToMinutes(timeString) {
+  const parts = String(timeString || "").split(":").map(Number);
+  if (parts.length !== 2) return 0;
+  return parts[0] * 60 + parts[1];
+}
+
+function doReservationsOverlap(first, second) {
+  if (!first || !second) return false;
+  if (first.date !== second.date) return false;
+  if (first.status === SESSION_STATUS.CANCELED || second.status === SESSION_STATUS.CANCELED) return false;
+
+  const firstStart = timeToMinutes(first.time);
+  const firstEnd = firstStart + Number(first.durationMinutes || 0);
+  const secondStart = timeToMinutes(second.time);
+  const secondEnd = secondStart + Number(second.durationMinutes || 0);
+
+  return firstStart < secondEnd && secondStart < firstEnd;
+}
+
+function hasOverlappingReservation(reservations, nextReservation) {
+  return reservations.some(function (reservation) {
+    const sameTrainer = reservation.trainerName === nextReservation.trainerName;
+    const sameMember = reservation.memberName === nextReservation.memberName;
+    return (sameTrainer || sameMember) && doReservationsOverlap(reservation, nextReservation);
+  });
+}
+
+function getReservationEndMinutes(reservation) {
+  return timeToMinutes(reservation.time) + Number(reservation.durationMinutes || 0);
+}
+
+function isSlotBlockedByReservation(reservations, trainerName, memberName, date, slot) {
+  const slotStart = timeToMinutes(slot);
+  const slotEnd = slotStart + 30;
+
+  return reservations.some(function (reservation) {
+    if (reservation.status === SESSION_STATUS.CANCELED) return false;
+    if (reservation.date !== date) return false;
+
+    const sameTrainer = reservation.trainerName === trainerName;
+    const sameMember = reservation.memberName === memberName;
+    if (!sameTrainer && !sameMember) return false;
+
+    const reservationStart = timeToMinutes(reservation.time);
+    const reservationEnd = getReservationEndMinutes(reservation);
+
+    return slotStart < reservationEnd && reservationStart < slotEnd;
+  });
+}
+
+function isSlotPartOfSelection(slot, selectedTime, durationMinutes) {
+  const slotStart = timeToMinutes(slot);
+  const selectedStart = timeToMinutes(selectedTime);
+  const selectedEnd = selectedStart + Number(durationMinutes || 0);
+  return slotStart >= selectedStart && slotStart < selectedEnd;
+}
+
+function isStartTimeSelectable(slot, durationMinutes) {
+  const start = timeToMinutes(slot);
+  const end = start + Number(durationMinutes || 0);
+  return start >= timeToMinutes("08:00") && end <= timeToMinutes("21:00");
+}
+
+function canMemberCancelReservation(reservation, now) {
+  if (!reservation) return false;
+  if (reservation.status === SESSION_STATUS.CANCELED) return false;
+  if (reservation.status === SESSION_STATUS.WAITING_MEMBER_CONFIRM) return false;
+  if (reservation.status === SESSION_STATUS.DEDUCTED) return false;
+  return isReservationAtLeastHoursAway(reservation, now, 48);
+}
+
+function getReservationDateTime(reservation) {
+  if (!reservation || !reservation.date || !reservation.time) return null;
+  if (reservation.time === "수동차감") return null;
+  const dateTime = new Date(reservation.date + "T" + reservation.time + ":00");
+  if (Number.isNaN(dateTime.getTime())) return null;
+  return dateTime;
+}
+
+function isReservationAtLeastHoursAway(reservation, now, hours) {
+  const reservationDateTime = getReservationDateTime(reservation);
+  if (!reservationDateTime) return false;
+  const baseTime = now instanceof Date ? now : new Date();
+  const diffMs = reservationDateTime.getTime() - baseTime.getTime();
+  return diffMs >= hours * 60 * 60 * 1000;
+}
+
+function canTrainerConfirmReservation(reservation) {
+  return reservation && reservation.status === SESSION_STATUS.REQUESTED;
+}
+
+function canTrainerCompleteReservation(reservation) {
+  return reservation && reservation.status === SESSION_STATUS.CONFIRMED;
+}
+
+function canMemberConfirmLessonComplete(reservation) {
+  return reservation && reservation.status === SESSION_STATUS.WAITING_MEMBER_CONFIRM;
+}
+
+function canTrainerCancelReservation(reservation) {
+  if (!reservation) return false;
+  if (reservation.status === SESSION_STATUS.CANCELED) return false;
+  if (reservation.status === SESSION_STATUS.DEDUCTED) return false;
+  return true;
+}
+
+function canAdminCancelReservation(reservation) {
+  if (!reservation) return false;
+  return reservation.status !== SESSION_STATUS.CANCELED;
+}
+
+function canAdminRestoreReservation(reservation) {
+  return reservation && reservation.status === SESSION_STATUS.CANCELED && reservation.previousStatus;
+}
+
+function getNextLessonDateForMember(reservations, memberName) {
+  const activeReservations = sortReservations(reservations).filter(function (reservation) {
+    return reservation.memberName === memberName && reservation.status !== SESSION_STATUS.CANCELED && reservation.status !== SESSION_STATUS.DEDUCTED;
+  });
+
+  if (activeReservations.length === 0) return "없음";
+  return activeReservations[0].date + " " + activeReservations[0].time;
+}
+
+function findMemberByName(members, memberName) {
+  const foundMember = members.find(function (member) {
+    return member.name === memberName;
+  });
+  return foundMember || null;
+}
+
+function getReservationStatusActionText(status) {
+  if (status === SESSION_STATUS.REQUESTED) return "강사 확인이 필요합니다.";
+  if (status === SESSION_STATUS.CONFIRMED) return "수업 완료 처리가 가능합니다.";
+  if (status === SESSION_STATUS.WAITING_MEMBER_CONFIRM) return "회원 수업완료 확인 대기 중입니다.";
+  if (status === SESSION_STATUS.DEDUCTED) return "차감 완료된 예약입니다.";
+  if (status === SESSION_STATUS.CANCELED) return "취소된 예약입니다.";
+  return "상태 확인이 필요합니다.";
+}
+
+function getBookedMinutesByDate(reservations, memberName, dateString) {
+  return reservations
+    .filter(function (reservation) {
+      return reservation.memberName === memberName && reservation.date === dateString && reservation.status !== SESSION_STATUS.CANCELED;
+    })
+    .reduce(function (total, reservation) {
+      return total + Number(reservation.durationMinutes || 0);
+    }, 0);
+}
+
+function getBookedMinutesByWeek(reservations, memberName, dateString) {
+  const range = getWeekRangeSundayToSaturday(dateString);
+  return reservations
+    .filter(function (reservation) {
+      return reservation.memberName === memberName && reservation.date >= range.start && reservation.date <= range.end && reservation.status !== SESSION_STATUS.CANCELED;
+    })
+    .reduce(function (total, reservation) {
+      return total + Number(reservation.durationMinutes || 0);
+    }, 0);
+}
+
+function validateReservationRequest(data) {
+  const reservations = data.reservations || [];
+  const members = data.members || [];
+  const memberName = data.memberName;
+  const trainerName = data.trainerName;
+  const date = data.date;
+  const time = data.time;
+  const durationMinutes = Number(data.durationMinutes);
+  const today = data.today;
+
+  if (!memberName) return { ok: false, message: "회원 정보가 없습니다." };
+  if (!trainerName) return { ok: false, message: "담당 강사 정보가 없습니다." };
+  if (!date) return { ok: false, message: "예약 날짜를 선택해야 합니다." };
+  if (!time) return { ok: false, message: "예약 시간을 선택해야 합니다." };
+  if (durationMinutes !== 30 && durationMinutes !== 60) return { ok: false, message: "예약 시간은 30분 또는 1시간만 가능합니다." };
+  const member = getMemberByName(members, memberName);
+  if (member && getRemainingSessions(member) < getDeductionByDuration(durationMinutes)) {
+    return { ok: false, message: "잔여 횟수가 부족하여 예약할 수 없습니다." };
+  }
+  if (!isStartTimeSelectable(time, durationMinutes)) return { ok: false, message: "선택한 수업 길이가 예약 가능 시간을 벗어납니다." };
+  if (!isWithinThreeWeeks(date, today)) return { ok: false, message: "예약은 오늘 기준 최대 3주 이내만 가능합니다." };
+
+  const nextReservation = {
+    memberName: memberName,
+    trainerName: trainerName,
+    date: date,
+    time: time,
+    durationMinutes: durationMinutes,
+    status: SESSION_STATUS.REQUESTED,
+  };
+
+  if (hasOverlappingReservation(reservations, nextReservation)) {
+    return { ok: false, message: "이미 같은 시간대에 겹치는 예약이 있습니다." };
+  }
+
+  const dailyMinutes = getBookedMinutesByDate(reservations, memberName, date);
+  if (dailyMinutes + durationMinutes > 120) return { ok: false, message: "예약은 하루 최대 2시간까지만 가능합니다." };
+
+  const weeklyMinutes = getBookedMinutesByWeek(reservations, memberName, date);
+  if (weeklyMinutes + durationMinutes > 480) return { ok: false, message: "예약은 일요일~토요일 기준 1주 총 8시간까지만 가능합니다." };
+
+  return { ok: true, message: "예약 가능한 조건입니다." };
+}
+
+function validateManualDeduction(data) {
+  const member = data.member;
+  const durationMinutes = Number(data.durationMinutes);
+  if (!member) return { ok: false, message: "회원을 선택해주세요." };
+  if (durationMinutes !== 30 && durationMinutes !== 60) return { ok: false, message: "수동 차감은 30분 또는 1시간만 가능합니다." };
+  if (getRemainingSessions(member) < getDeductionByDuration(durationMinutes)) return { ok: false, message: "잔여 횟수가 부족합니다." };
+  return { ok: true, message: "수동 차감 요청이 가능합니다." };
+}
+
+function generateTimeSlots() {
+  const slots = [];
+  for (let hour = 8; hour <= 20; hour += 1) {
+    slots.push(String(hour).padStart(2, "0") + ":00");
+    slots.push(String(hour).padStart(2, "0") + ":30");
+  }
+  return slots;
+}
+
+function getWeekDaysFromRange(range) {
+  const start = parseDate(range.start);
+  if (!start) return [];
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  return [0, 1, 2, 3, 4, 5, 6].map(function (offset) {
+    const date = addDays(start, offset);
+    return {
+      date: toDateOnly(date),
+      label: weekdays[date.getDay()],
+      dayNumber: date.getDate(),
+    };
+  });
+}
+
+function getReservationsForSlot(reservations, date, slot) {
+  const slotStart = timeToMinutes(slot);
+  const slotEnd = slotStart + 30;
+  return reservations.filter(function (reservation) {
+    if (reservation.status === SESSION_STATUS.CANCELED) return false;
+    if (reservation.date !== date) return false;
+    const reservationStart = timeToMinutes(reservation.time);
+    const reservationEnd = getReservationEndMinutes(reservation);
+    return slotStart < reservationEnd && reservationStart < slotEnd;
+  });
+}
+
+function getReservationsForDate(reservations, date) {
+  return sortReservations(reservations.filter(function (reservation) {
+    return reservation.status !== SESSION_STATUS.CANCELED && reservation.date === date;
+  }));
+}
+
+function getReservationsForMember(reservations, memberName) {
+  return sortReservations(reservations.filter(function (reservation) {
+    return reservation.memberName === memberName;
+  }));
+}
+
+function getMemberStatusText(member, todayString) {
+  if (!member) return "회원 정보 없음";
+  if (member.isHidden) return "숨김";
+  if (getRemainingSessions(member) === 0) return "사용완료";
+  if (addOneYear(member.firstLessonDate) < todayString) return "만료";
+  if (getRemainingSessions(member) <= 2) return "주의";
+  return "정상";
+}
+
+function normalizeSearchText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .split(" ").join("")
+    .split("-").join("");
+}
+
+function doesReservationMatchSearch(reservation, keyword) {
+  const query = normalizeSearchText(keyword);
+  if (!query) return true;
+  const target = normalizeSearchText([
+    reservation.memberName,
+    reservation.trainerName,
+    reservation.date,
+    reservation.time,
+    reservation.status,
+  ].join(" "));
+  return target.indexOf(query) >= 0;
+}
+
+function doesReservationMatchStatus(reservation, statusFilter) {
+  if (!statusFilter || statusFilter === "ALL") return true;
+  return reservation.status === statusFilter;
+}
+
+function filterReservations(reservations, keyword, statusFilter) {
+  return sortReservations(reservations.filter(function (reservation) {
+    return doesReservationMatchSearch(reservation, keyword) && doesReservationMatchStatus(reservation, statusFilter);
+  }));
+}
+
+function doesMemberMatchSearch(member, keyword) {
+  const query = normalizeSearchText(keyword);
+  if (!query) return true;
+  const target = normalizeSearchText([
+    member.name,
+    member.phone,
+    member.trainerName,
+    member.address,
+  ].join(" "));
+  return target.indexOf(query) >= 0;
+}
+
+function filterMembersBySearch(members, keyword) {
+  return members.filter(function (member) {
+    return doesMemberMatchSearch(member, keyword);
+  });
+}
+
+function createReservationId() {
+  return "r" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+}
+
+function createMemberId() {
+  return "m" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+}
+
+function createTrainerId() {
+  return "trainer_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+}
+
+function createAuthCode() {
+  return "PT" + Math.floor(100000 + Math.random() * 900000);
+}
+
+function isValidPackageCount(count) {
+  const value = Number(count);
+  return value > 0 && value <= 57;
+}
+
+function formatPhoneNumber(value) {
+  const onlyNumbers = String(value || "").replace(new RegExp("[^0-9]", "g"), "").slice(0, 11);
+  if (onlyNumbers.length <= 3) return onlyNumbers;
+  if (onlyNumbers.length <= 7) return onlyNumbers.slice(0, 3) + "-" + onlyNumbers.slice(3);
+  return onlyNumbers.slice(0, 3) + "-" + onlyNumbers.slice(3, 7) + "-" + onlyNumbers.slice(7);
+}
+
+function isValidPhoneNumber(value) {
+  return new RegExp("^[0-9]{3}-[0-9]{4}-[0-9]{4}$").test(String(value || ""));
+}
+
+function validateNewMemberForm(data) {
+  if (!data.name || !String(data.name).trim()) return { ok: false, message: "회원 이름을 입력해주세요." };
+  if (!data.phone || !String(data.phone).trim()) return { ok: false, message: "연락처를 입력해주세요." };
+  if (!isValidPhoneNumber(data.phone)) return { ok: false, message: "연락처는 000-0000-0000 형태로 입력해주세요." };
+  if (!data.address || !String(data.address).trim()) return { ok: false, message: "주소를 입력해주세요." };
+  if (!data.firstLessonDate) return { ok: false, message: "첫 수업일을 선택해주세요." };
+  if (!isValidPackageCount(data.totalSessions)) return { ok: false, message: "회원권 횟수는 1~57회 사이로 입력해주세요." };
+  return { ok: true, message: "회원 추가가 가능한 정보입니다." };
+}
+
+function normalizeLoginId(value) {
+  return String(value || "").trim().toLowerCase().replace(new RegExp("[^a-z0-9_]", "g"), "");
+}
+
+function validateTrainerForm(data, trainers) {
+  const name = String(data.name || "").trim();
+  const loginId = normalizeLoginId(data.loginId);
+  const phone = String(data.phone || "").trim();
+
+  if (!name) return { ok: false, message: "강사 이름을 입력해주세요." };
+  if (!loginId) return { ok: false, message: "강사 아이디를 입력해주세요. 영문, 숫자, 밑줄만 사용할 수 있습니다." };
+  if (!phone) return { ok: false, message: "강사 연락처를 입력해주세요." };
+  if (!isValidPhoneNumber(phone)) return { ok: false, message: "연락처는 000-0000-0000 형태로 입력해주세요." };
+
+  const duplicated = trainers.some(function (trainer) {
+    return !trainer.isHidden && normalizeLoginId(trainer.loginId) === loginId;
+  });
+  if (duplicated) return { ok: false, message: "이미 사용 중인 강사 아이디입니다." };
+
+  return { ok: true, message: "강사 등록이 가능한 정보입니다." };
+}
+
+function createUserFromMember(member) {
+  return {
+    id: member.id,
+    name: member.name,
+    role: "member",
+    trainerName: member.trainerName,
+    totalSessions: member.totalSessions,
+    usedSessions: member.usedSessions,
+    firstLessonDate: member.firstLessonDate,
+    nextLessonDate: member.nextLessonDate,
+  };
+}
+
+function createUserFromTrainer(trainer) {
+  return {
+    id: trainer.id,
+    name: trainer.name,
+    role: "trainer",
+  };
+}
+
+function createUserFromAdmin(admin) {
+  return {
+    id: admin.id,
+    name: admin.name,
+    role: "admin",
+  };
+}
+
+function authenticateLogin(data) {
+  const role = data.role;
+  const members = data.members || [];
+  const trainers = data.trainers || [];
+  const admins = data.admins || [];
+
+  if (role === "member") {
+    const authCode = String(data.authCode || "").trim().toUpperCase();
+    const password = String(data.password || "").trim();
+    if (!authCode) return { ok: false, message: "회원 인증번호를 입력해주세요." };
+    if (!password) return { ok: false, message: "비밀번호를 입력해주세요." };
+
+    const member = members.find(function (item) {
+      return !item.isHidden && String(item.authCode || "").toUpperCase() === authCode;
+    });
+    if (!member) return { ok: false, message: "일치하는 회원 인증번호가 없습니다." };
+    if (String(member.password || "a123456") !== password) return { ok: false, message: "비밀번호가 일치하지 않습니다." };
+    return { ok: true, message: "회원 로그인 성공", user: createUserFromMember(member) };
+  }
+
+  if (role === "trainer") {
+    const loginId = normalizeLoginId(data.loginId);
+    const password = String(data.password || "").trim();
+    if (!loginId) return { ok: false, message: "강사 아이디를 입력해주세요." };
+    if (!password) return { ok: false, message: "비밀번호를 입력해주세요." };
+
+    const trainer = trainers.find(function (item) {
+      return !item.isHidden && normalizeLoginId(item.loginId) === loginId;
+    });
+    if (!trainer) return { ok: false, message: "일치하는 강사 아이디가 없습니다." };
+    if (String(trainer.password || trainer.initialPassword || "a123456") !== password) return { ok: false, message: "비밀번호가 일치하지 않습니다." };
+    return { ok: true, message: "강사 로그인 성공", user: createUserFromTrainer(trainer) };
+  }
+
+  if (role === "admin") {
+    const loginId = normalizeLoginId(data.loginId);
+    const password = String(data.password || "").trim();
+    if (!loginId) return { ok: false, message: "관리자 아이디를 입력해주세요." };
+    if (!password) return { ok: false, message: "비밀번호를 입력해주세요." };
+
+    const admin = admins.find(function (item) {
+      return !item.isHidden && normalizeLoginId(item.loginId) === loginId;
+    });
+    if (!admin) return { ok: false, message: "일치하는 관리자 아이디가 없습니다." };
+    if (String(admin.password || "") !== password) return { ok: false, message: "비밀번호가 일치하지 않습니다." };
+    return { ok: true, message: "관리자 로그인 성공", user: createUserFromAdmin(admin) };
+  }
+
+  return { ok: false, message: "로그인 권한을 선택해주세요." };
+}
+
+function isValidPassword(value) {
+  return String(value || "").length >= 6;
+}
+
+function validatePasswordChange(data) {
+  const currentPassword = String(data.currentPassword || "").trim();
+  const newPassword = String(data.newPassword || "").trim();
+  const confirmPassword = String(data.confirmPassword || "").trim();
+  if (!currentPassword) return { ok: false, message: "현재 비밀번호를 입력해주세요." };
+  if (!isValidPassword(newPassword)) return { ok: false, message: "새 비밀번호는 6자 이상이어야 합니다." };
+  if (newPassword !== confirmPassword) return { ok: false, message: "새 비밀번호 확인이 일치하지 않습니다." };
+  return { ok: true, message: "비밀번호 변경이 가능합니다." };
+}
+
+function getInitialPassword() {
+  return "a123456";
+}
+
+function sortReservations(reservations) {
+  return reservations.slice().sort(function (a, b) {
+    const left = String(a.date || "") + String(a.time || "");
+    const right = String(b.date || "") + String(b.time || "");
+    if (left < right) return -1;
+    if (left > right) return 1;
+    return 0;
+  });
+}
+
+const DATABASE_TABLES = [
+  {
+    name: "profiles",
+    label: "공통 프로필",
+    purpose: "회원, 강사, 관리자 공통 로그인/권한 정보",
+    fields: ["id", "role", "name", "login_id", "password_hash", "phone", "is_hidden", "created_at"],
+  },
+  {
+    name: "members",
+    label: "회원 정보",
+    purpose: "회원권, 담당 강사, 주소, 인증번호 관리",
+    fields: ["id", "profile_id", "trainer_id", "auth_code", "address", "first_lesson_date", "total_sessions", "used_sessions", "is_hidden"],
+  },
+  {
+    name: "trainers",
+    label: "강사 정보",
+    purpose: "강사 계정, 배정 회원, 숨김 처리 관리",
+    fields: ["id", "profile_id", "login_id", "phone", "is_hidden"],
+  },
+  {
+    name: "reservations",
+    label: "예약 정보",
+    purpose: "회원 예약, 강사 등록 예약, 상태 변경 관리",
+    fields: ["id", "member_id", "trainer_id", "date", "time", "duration_minutes", "status", "previous_status", "is_manual_deduction", "created_at"],
+  },
+  {
+    name: "session_logs",
+    label: "차감 기록",
+    purpose: "회원과 강사 확인 후 실제 차감된 이력 보존",
+    fields: ["id", "reservation_id", "member_id", "trainer_id", "deducted_sessions", "confirmed_by_member_at", "created_at"],
+  },
+];
+
+function getDatabaseReadinessItems() {
+  return [
+    { label: "회원/강사/관리자 권한 분리", done: true },
+    { label: "예약 상태값 정리", done: true },
+    { label: "회원권 차감 규칙 정리", done: true },
+    { label: "숨김 삭제 방식 정리", done: true },
+    { label: "비밀번호 초기화 정책 정리", done: true },
+    { label: "Supabase 실제 연결", done: false },
+    { label: "실시간 동기화 확인", done: false },
+  ];
+}
+
+function runBusinessRuleTests() {
+  const testToday = makeDate(2026, 4, 27);
+  const baseReservations = [
+    { id: "t1", memberName: "테스트회원", trainerName: "테스트강사", date: "2026-04-28", time: "09:00", durationMinutes: 60, status: SESSION_STATUS.CONFIRMED },
+    { id: "t2", memberName: "테스트회원", trainerName: "테스트강사", date: "2026-04-28", time: "10:00", durationMinutes: 30, status: SESSION_STATUS.CONFIRMED },
+    { id: "t3", memberName: "테스트회원", trainerName: "테스트강사", date: "2026-04-29", time: "10:00", durationMinutes: 60, status: SESSION_STATUS.CANCELED },
+    { id: "t4", memberName: "다른회원", trainerName: "테스트강사", date: "2026-04-30", time: "11:00", durationMinutes: 60, status: SESSION_STATUS.CONFIRMED },
+  ];
+
+  return [
+    { name: "1시간 수업은 1회 차감", pass: getDeductionByDuration(60) === 1 },
+    { name: "30분 수업은 0.5회 차감", pass: getDeductionByDuration(30) === 0.5 },
+    { name: "3주 이내 예약 가능", pass: isWithinThreeWeeks("2026-05-18", testToday) === true && isWithinThreeWeeks("2026-05-19", testToday) === false },
+    { name: "1주는 일요일~토요일", pass: getWeekRangeSundayToSaturday("2026-04-29").start === "2026-04-26" && getWeekRangeSundayToSaturday("2026-04-29").end === "2026-05-02" },
+    { name: "하루 2시간 초과 예약 불가", pass: validateReservationRequest({ reservations: baseReservations, members: [], memberName: "테스트회원", trainerName: "테스트강사", date: "2026-04-28", time: "11:00", durationMinutes: 60, today: testToday }).ok === false },
+    { name: "취소 예약은 제한 계산에서 제외", pass: validateReservationRequest({ reservations: baseReservations, members: [], memberName: "테스트회원", trainerName: "테스트강사", date: "2026-04-29", time: "10:00", durationMinutes: 60, today: testToday }).ok === true },
+    { name: "강사 같은 시간 중복 예약 불가", pass: validateReservationRequest({ reservations: baseReservations, members: [], memberName: "새회원", trainerName: "테스트강사", date: "2026-04-30", time: "11:30", durationMinutes: 30, today: testToday }).ok === false },
+    { name: "차감대기 이후 회원 취소 불가", pass: canMemberCancelReservation({ status: SESSION_STATUS.WAITING_MEMBER_CONFIRM }, testToday) === false },
+    { name: "회원 예약취소는 48시간 전까지만 가능", pass: canMemberCancelReservation({ status: SESSION_STATUS.CONFIRMED, date: "2026-04-30", time: "10:00" }, testToday) === true && canMemberCancelReservation({ status: SESSION_STATUS.CONFIRMED, date: "2026-04-28", time: "10:00" }, testToday) === false },
+    { name: "잔여횟수 부족 시 예약 불가", pass: validateReservationRequest({ reservations: [], members: [{ name: "부족회원", totalSessions: 1, usedSessions: 1, isHidden: false }], memberName: "부족회원", trainerName: "테스트강사", date: "2026-04-29", time: "10:00", durationMinutes: 30, today: testToday }).ok === false },
+    { name: "강사는 예약요청을 확정 가능", pass: canTrainerConfirmReservation({ status: SESSION_STATUS.REQUESTED }) === true },
+    { name: "강사는 예약확정 후 수업완료 가능", pass: canTrainerCompleteReservation({ status: SESSION_STATUS.CONFIRMED }) === true },
+    { name: "회원은 차감대기 상태를 확인 가능", pass: canMemberConfirmLessonComplete({ status: SESSION_STATUS.WAITING_MEMBER_CONFIRM }) === true },
+    { name: "회원권 횟수 8/22/57 사용 가능", pass: isValidPackageCount(8) && isValidPackageCount(22) && isValidPackageCount(57) },
+    { name: "회원권 58회 이상 입력 불가", pass: isValidPackageCount(58) === false },
+    { name: "연락처 000-0000-0000 형식 검사", pass: isValidPhoneNumber("010-1234-5678") === true && isValidPhoneNumber("01012345678") === false },
+    { name: "연락처 자동 하이픈 변환", pass: formatPhoneNumber("01012345678") === "010-1234-5678" },
+    { name: "강사 아이디 영문/숫자/밑줄 정리", pass: normalizeLoginId(" Trainer Kim!! ") === "trainerkim" },
+    { name: "이번 주 offset은 0", pass: isCurrentWeekOffset(0) === true && isCurrentWeekOffset(1) === false },
+    { name: "회원 검색은 하이픈 없이 연락처 검색 가능", pass: doesMemberMatchSearch({ name: "홍길동", phone: "010-1234-5678", trainerName: "김트레이너", address: "서울" }, "01012345678") === true },
+    { name: "예약 검색은 회원명으로 가능", pass: doesReservationMatchSearch({ memberName: "홍길동", trainerName: "김트레이너", date: "2026-04-30", time: "10:00", status: SESSION_STATUS.CONFIRMED }, "홍길동") === true },
+    { name: "예약 상태 필터 작동", pass: doesReservationMatchStatus({ status: SESSION_STATUS.CONFIRMED }, SESSION_STATUS.CONFIRMED) === true && doesReservationMatchStatus({ status: SESSION_STATUS.REQUESTED }, SESSION_STATUS.CONFIRMED) === false },
+    { name: "강사는 차감완료 예약 취소 불가", pass: canTrainerCancelReservation({ status: SESSION_STATUS.DEDUCTED }) === false },
+    { name: "관리자는 차감완료 예약도 예외 취소 가능", pass: canAdminCancelReservation({ status: SESSION_STATUS.DEDUCTED }) === true },
+    { name: "회원 인증번호 로그인 가능", pass: authenticateLogin({ role: "member", authCode: "PT123456", password: "a123456", members: SAMPLE_MEMBERS }).ok === true },
+    { name: "강사 아이디 로그인 가능", pass: authenticateLogin({ role: "trainer", loginId: "trainer_kim", password: "a123456", trainers: SAMPLE_TRAINERS }).ok === true },
+    { name: "관리자 아이디 로그인 가능", pass: authenticateLogin({ role: "admin", loginId: "admin", password: "a123456", admins: SAMPLE_ADMINS }).ok === true },
+    { name: "비밀번호는 6자 이상", pass: isValidPassword("a12345") === true && isValidPassword("123") === false },
+    { name: "초기 비밀번호는 a123456", pass: getInitialPassword() === "a123456" },
+    { name: "DB 준비 테이블은 5개 이상", pass: DATABASE_TABLES.length >= 5 },
+    { name: "DB 연결 전 미완료 항목 존재", pass: getDatabaseReadinessItems().some(function (item) { return item.done === false; }) === true },
+  ];
+}
+
+function AppCard(props) {
+  return <div className={"rounded-2xl border border-slate-200 bg-white p-5 shadow-sm " + (props.className || "")}>{props.children}</div>;
+}
+
+function StatCard({ emoji, label, value, description }) {
+  return (
+    <AppCard>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-slate-500">{label}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+          {description ? <p className="mt-2 text-sm text-slate-500">{description}</p> : null}
+        </div>
+        <div className="rounded-2xl bg-slate-100 px-3 py-2 text-xl">{emoji}</div>
+      </div>
+    </AppCard>
+  );
+}
+
+function StatusBadge({ status }) {
+  const label = status || "상태없음";
+  let className = "bg-slate-50 text-slate-600 border-slate-200";
+  if (label === SESSION_STATUS.REQUESTED) className = "bg-amber-50 text-amber-700 border-amber-200";
+  if (label === SESSION_STATUS.CONFIRMED) className = "bg-blue-50 text-blue-700 border-blue-200";
+  if (label === SESSION_STATUS.WAITING_MEMBER_CONFIRM) className = "bg-orange-50 text-orange-700 border-orange-200";
+  if (label === SESSION_STATUS.DEDUCTED) className = "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (label === SESSION_STATUS.CANCELED) className = "bg-slate-50 text-slate-500 border-slate-200";
+
+  return <span className={"rounded-full border px-3 py-1 text-xs font-semibold " + className}>{label.split("_").join(" ")}</span>;
+}
+
+function MemberStatusBadge({ member, todayString }) {
+  const status = getMemberStatusText(member, todayString);
+  let className = "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (status === "주의") className = "bg-amber-50 text-amber-700 border-amber-200";
+  if (status === "만료") className = "bg-red-50 text-red-700 border-red-200";
+  if (status === "사용완료") className = "bg-blue-50 text-blue-700 border-blue-200";
+  if (status === "숨김") className = "bg-slate-50 text-slate-500 border-slate-200";
+  return <span className={"rounded-full border px-3 py-1 text-xs font-semibold " + className}>{status}</span>;
+}
+
+function MemberDetailCard({ member, reservations, todayString, onClose }) {
+  if (!member) return null;
+  const memberReservations = getReservationsForMember(reservations, member.name);
+  const remaining = getRemainingSessions(member);
+  const expiryDate = addOneYear(member.firstLessonDate);
+  const nextLesson = getNextLessonDateForMember(reservations, member.name);
+
+  return (
+    <AppCard className="border-slate-900">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-bold">{member.name} 상세정보</h2>
+            <MemberStatusBadge member={member} todayString={todayString} />
           </div>
-        );
-      }
-      function Pill({ label, tone }) {
-        return <span className="badge" style={{ background: tone.bg, borderColor: tone.border, color: tone.text }}>{label}</span>;
-      }
-      function Modal({ open, children }) {
-        if (!open) return null;
-        return <div className="overlay"><div className="modal">{children}</div></div>;
-      }
-      function SectionCard({ title, subtitle, children, innerRef }) {
-        return (
-          <div className="card" ref={innerRef}>
-            <h3>{title}</h3>
-            {subtitle ? <p className="card-sub">{subtitle}</p> : null}
-            <div className="section-gap">{children}</div>
-          </div>
-        );
-      }
+          <p className="mt-2 text-sm text-slate-500">담당 강사 {member.trainerName}</p>
+        </div>
+        {onClose ? (
+          <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">닫기</button>
+        ) : null}
+      </div>
 
-      function App() {
-        const [currentUser, setCurrentUser] = useState(DEMO_ACCOUNTS[0]);
-        const [trainers] = useState(INITIAL_TRAINERS);
-        const [members, setMembers] = useState(INITIAL_MEMBERS);
-        const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
-        const [reports, setReports] = useState(INITIAL_REPORTS);
-        const [deletedBookings, setDeletedBookings] = useState([]);
-        const [searchQuery, setSearchQuery] = useState("");
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">연락처</p>
+          <p className="mt-1 font-bold">{member.phone}</p>
+        </div>
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">첫 수업일</p>
+          <p className="mt-1 font-bold">{member.firstLessonDate}</p>
+        </div>
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">만료일</p>
+          <p className="mt-1 font-bold">{expiryDate}</p>
+        </div>
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">다음 수업</p>
+          <p className="mt-1 font-bold">{nextLesson}</p>
+        </div>
+      </div>
 
-        const currentMember = members.find((m) => m.id === currentUser.memberId) || members[0];
-        const currentTrainer = trainers.find((t) => t.id === currentUser.trainerId) || trainers[0];
-        const alertItems = useMemo(() => getAlertItems(members, trainers, bookings), [members, trainers, bookings]);
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">총 횟수</p>
+          <p className="mt-1 text-2xl font-bold">{member.totalSessions}</p>
+        </div>
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">사용 횟수</p>
+          <p className="mt-1 text-2xl font-bold">{member.usedSessions}</p>
+        </div>
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-sm text-slate-500">잔여 횟수</p>
+          <p className="mt-1 text-2xl font-bold">{remaining}</p>
+        </div>
+      </div>
 
-        const memberBookings = bookings.filter((b) => b.memberId === currentMember.id && b.status !== "cancelled" && b.status !== "deducted");
-        const pendingUsages = bookings.filter((b) => b.memberId === currentMember.id && b.status === "awaiting_member_confirmation");
-        const trainerMembers = members.filter((m) => m.trainerId === currentTrainer.id);
-        const trainerAlerts = alertItems.filter((a) => members.find((m) => m.id === a.memberId)?.trainerId === currentTrainer.id);
+      <div className="mt-3 rounded-2xl bg-slate-50 p-4">
+        <p className="text-sm text-slate-500">주소</p>
+        <p className="mt-1 font-bold text-slate-900">{member.address}</p>
+      </div>
 
-        const searchNormalized = searchQuery.trim().toLowerCase();
-        const compactSearch = searchNormalized.replace(/[^0-9a-z가-힣]/g, "");
-        const memberResults = searchNormalized ? members.filter((m) => m.name.toLowerCase().includes(searchNormalized) || m.phone.replace(/[^0-9]/g, "").includes(compactSearch)) : [];
-        const trainerResults = searchNormalized ? trainers.filter((t) => t.name.toLowerCase().includes(searchNormalized) || t.phone.replace(/[^0-9]/g, "").includes(compactSearch) || t.specialty.toLowerCase().includes(searchNormalized)) : [];
-        const bookingResults = searchNormalized ? bookings.filter((b) => {
-          const member = members.find((m) => m.id === b.memberId);
-          const trainer = trainers.find((t) => t.id === b.trainerId);
-          const hay = `${b.date} ${b.time} ${member?.name || ""} ${trainer?.name || ""} ${b.status}`.toLowerCase();
-          const compact = `${b.date.replace(/-/g, "")} ${b.time.replace(/:/g, "")} ${(member?.phone || "").replace(/[^0-9]/g, "")}`;
-          return hay.includes(searchNormalized) || compact.includes(compactSearch);
-        }) : [];
-
-        const reserveSlot = (date, time) => {
-          if (date < TODAY || date > addDays(TODAY, 21)) return window.alert("예약 가능 기간은 오늘부터 3주 이내입니다.");
-          const exists = bookings.some((b) => b.trainerId === currentMember.trainerId && b.date === date && b.time === time && b.status !== "cancelled");
-          if (exists) return window.alert("이미 예약된 시간입니다.");
-          setBookings((prev) => [...prev, { id: `b${Date.now()}`, trainerId: currentMember.trainerId, memberId: currentMember.id, date, time, status: "requested" }]);
-          setReports((prev) => [{ id: `r${Date.now()}`, memberId: currentMember.id, message: `${formatDateLabel(date)} ${time} 예약 요청이 접수되었습니다.`, createdAt: `${TODAY} 10:00` }, ...prev]);
-        };
-        const cancelBooking = (bookingId) => {
-          const booking = bookings.find((b) => b.id === bookingId);
-          if (!booking) return;
-          if (!canCancel(booking.date, booking.time)) return window.alert("수업 48시간 이내라 센터 문의가 필요합니다.");
-          setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b));
-        };
-        const completeClass = (bookingId) => setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "awaiting_member_confirmation" } : b));
-        const confirmDeduction = (bookingId) => {
-          const booking = bookings.find((b) => b.id === bookingId);
-          if (!booking) return;
-          setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "deducted" } : b));
-          setMembers((prev) => prev.map((m) => m.id === booking.memberId ? { ...m, remainingSessions: Math.max(0, m.remainingSessions - 1) } : m));
-        };
-        const createTrainerBooking = ({ trainerId, memberId, date, time }) => {
-          const exists = bookings.some((b) => b.trainerId === trainerId && b.date === date && b.time === time && b.status !== "cancelled");
-          if (exists) return window.alert("이미 예약된 시간입니다.");
-          setBookings((prev) => [...prev, { id: `b${Date.now()}`, trainerId, memberId, date, time, status: "confirmed" }]);
-        };
-        const trainerCancelBooking = (bookingId) => {
-          const booking = bookings.find((b) => b.id === bookingId);
-          if (!booking || booking.status === "deducted") return;
-          setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: "cancelled" } : b));
-        };
-        const addMember = ({ name, phone, trainerId, totalSessions, firstLessonDate, expiryDate }) => {
-          setMembers((prev) => [...prev, { id: `m${Date.now()}`, name, phone, trainerId, totalSessions, remainingSessions: totalSessions, firstLessonDate, expiryDate }]);
-        };
-        const adminDeleteBooking = (bookingId, reason) => {
-          const booking = bookings.find((b) => b.id === bookingId);
-          if (!booking) return;
-          const member = members.find((m) => m.id === booking.memberId);
-          const trainer = trainers.find((t) => t.id === booking.trainerId);
-          if (booking.status === "deducted") {
-            setMembers((prev) => prev.map((m) => m.id === booking.memberId ? { ...m, remainingSessions: Math.min(m.totalSessions, m.remainingSessions + 1) } : m));
-          }
-          setDeletedBookings((prev) => [{ id: `db${Date.now()}`, bookingId: booking.id, date: booking.date, time: booking.time, trainerName: trainer?.name || "-", memberName: member?.name || "-", previousStatus: booking.status, reason, deletedAt: `${TODAY} 12:00` }, ...prev]);
-          setBookings((prev) => prev.filter((b) => b.id !== bookingId));
-        };
-
-        const role = currentUser.role;
-
-        return (
-          <div className="app-shell">
-            <div className="phone">
-              <div className="top">
-                <div className="title">본앤밸런스</div>
-                <div className="subtitle">GitHub Pages용 단일 파일 앱</div>
-                <div className="chip-row">
-                  {DEMO_ACCOUNTS.map((account) => (
-                    <button key={account.id} className={`chip ${currentUser.id === account.id ? "active" : ""}`} onClick={() => setCurrentUser(account)}>{account.label}</button>
-                  ))}
-                </div>
-                <div className="search-box">
-                  <TextField label="검색" value={searchQuery} onChange={setSearchQuery} placeholder="회원, 강사, 예약 검색" />
-                  {searchNormalized ? (
-                    <div className="search-results">
-                      <div className="search-card"><div className="search-card-title">회원 ({memberResults.length})</div>{memberResults.length === 0 ? <div className="muted" style={{ marginTop: 6 }}>일치하는 회원이 없습니다.</div> : memberResults.slice(0,4).map((m) => <div key={m.id} style={{ marginTop: 6, fontSize: 14 }}>{m.name} · {m.phone}</div>)}</div>
-                      <div className="search-card"><div className="search-card-title">강사 ({trainerResults.length})</div>{trainerResults.length === 0 ? <div className="muted" style={{ marginTop: 6 }}>일치하는 강사가 없습니다.</div> : trainerResults.slice(0,4).map((t) => <div key={t.id} style={{ marginTop: 6, fontSize: 14 }}>{t.name} · {t.specialty}</div>)}</div>
-                      <div className="search-card"><div className="search-card-title">예약 ({bookingResults.length})</div>{bookingResults.length === 0 ? <div className="muted" style={{ marginTop: 6 }}>일치하는 예약이 없습니다.</div> : bookingResults.slice(0,4).map((b) => <div key={b.id} style={{ marginTop: 6, fontSize: 14 }}>{formatDateLabel(b.date)} {b.time} · {getBookingStatusLabel(b.status)}</div>)}</div>
-                    </div>
-                  ) : null}
+      <div className="mt-5">
+        <h3 className="font-bold">예약 / 차감 내역</h3>
+        <div className="mt-3 space-y-2">
+          {memberReservations.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">예약 내역이 없습니다.</p> : null}
+          {memberReservations.map(function (reservation) {
+            return (
+              <div key={reservation.id} className="rounded-2xl border border-slate-200 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-bold">{reservation.date} {reservation.time}</p>
+                    <p className="mt-1 text-sm text-slate-500">{reservation.durationMinutes}분 · 차감 {getDeductionByDuration(reservation.durationMinutes)}회</p>
+                    {reservation.isManualDeduction ? <p className="mt-1 text-xs text-slate-400">강사 수동 차감 요청</p> : null}
+                  </div>
+                  <StatusBadge status={reservation.status} />
                 </div>
               </div>
-              {role === "member" ? <MemberPage currentMember={currentMember} trainers={trainers} bookings={memberBookings} reports={reports.filter((r) => r.memberId === currentMember.id)} pendingUsages={pendingUsages} alerts={alertItems.filter((a) => a.memberId === currentMember.id)} onReserve={reserveSlot} onCancelBooking={cancelBooking} onConfirmDeduction={confirmDeduction} /> : null}
-              {role === "trainer" ? <TrainerPage trainer={currentTrainer} members={trainerMembers} bookings={bookings.filter((b) => b.trainerId === currentTrainer.id)} alerts={trainerAlerts} onCreateTrainerBooking={createTrainerBooking} onTrainerCancelBooking={trainerCancelBooking} onCompleteClass={completeClass} onAddMember={addMember} /> : null}
-              {role === "admin" ? <AdminPage trainers={trainers} members={members} bookings={bookings} alerts={alertItems} deletedBookings={deletedBookings} onAdminDeleteBooking={adminDeleteBooking} /> : null}
+            );
+          })}
+        </div>
+      </div>
+    </AppCard>
+  );
+}
+
+function LoginScreen({ selectedRole, setSelectedRole, onLogin, today, tests }) {
+  const [authCode, setAuthCode] = useState("PT123456");
+  const [loginId, setLoginId] = useState("trainer_kim");
+  const [password, setPassword] = useState("a123456");
+  const [loginMessage, setLoginMessage] = useState("회원은 인증번호로, 강사와 관리자는 아이디로 로그인합니다.");
+
+  function handleRoleSelect(role) {
+    setSelectedRole(role);
+    setPassword("a123456");
+    if (role === "member") {
+      setAuthCode("PT123456");
+      setLoginId("");
+    }
+    if (role === "trainer") {
+      setLoginId("trainer_kim");
+      setAuthCode("");
+    }
+    if (role === "admin") {
+      setLoginId("admin");
+      setAuthCode("");
+    }
+    setLoginMessage("선택한 권한의 로그인 정보를 입력해주세요.");
+  }
+
+  function handleLoginClick() {
+    const result = onLogin({
+      role: selectedRole,
+      authCode: authCode,
+      loginId: loginId,
+      password: password,
+    });
+    if (result && !result.ok) setLoginMessage(result.message);
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 rounded-3xl bg-slate-900 p-7 text-white shadow-xl">
+          <p className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-sm text-slate-200">📅 오늘 날짜 자동 반영 · {formatKoreanDate(today)}</p>
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">본앤밸런스 예약 관리</h1>
+          <p className="mt-3 max-w-2xl text-slate-300">회원, 강사, 관리자의 세션을 분리하고 예약과 회원권 차감을 단계별로 관리합니다.</p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-3">
+          {Object.keys(ROLE_LABELS).map(function (role) {
+            const isSelected = selectedRole === role;
+            return (
+              <button
+                key={role}
+                type="button"
+                onClick={function () {
+                  handleRoleSelect(role);
+                }}
+                className={"rounded-3xl border p-6 text-left transition hover:shadow-lg " + (isSelected ? "border-slate-900 bg-white shadow-lg" : "border-slate-200 bg-white shadow-sm")}
+              >
+                <p className="text-3xl">{role === "member" ? "🙋" : role === "trainer" ? "🏋️" : "🛡️"}</p>
+                <h2 className="mt-4 text-xl font-bold">{ROLE_LABELS[role]}</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">{role === "member" ? "내 회원권 정보와 예약을 확인합니다." : role === "trainer" ? "회원 예약과 수업 완료를 관리합니다." : "전체 회원, 강사, 예약 현황을 관리합니다."}</p>
+                {isSelected ? <p className="mt-4 text-sm font-semibold text-slate-900">선택됨</p> : null}
+              </button>
+            );
+          })}
+        </div>
+
+        <AppCard className="mt-6">
+          <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+            <div>
+              <p className="font-bold">로그인</p>
+              <p className="mt-1 text-sm text-slate-500">회원은 인증번호와 비밀번호, 강사/관리자는 아이디와 비밀번호로 접속합니다.</p>
+              <p className="mt-2 text-xs text-slate-400">회원 기본 비밀번호 정책: a123456 · 비밀번호 찾기 없음 · 강사가 초기화</p>
             </div>
+            <button type="button" onClick={handleLoginClick} className="rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white shadow-sm hover:bg-slate-700">
+              {ROLE_LABELS[selectedRole]} 로그인
+            </button>
           </div>
-        );
-      }
 
-      function MemberPage({ currentMember, trainers, bookings, reports, pendingUsages, alerts, onReserve, onCancelBooking, onConfirmDeduction }) {
-        const [selectedDate, setSelectedDate] = useState(TODAY);
-        const [pendingTime, setPendingTime] = useState("");
-        const [confirmOpen, setConfirmOpen] = useState(false);
-        const trainerName = trainers.find((t) => t.id === currentMember.trainerId)?.name || "-";
-        const nextBooking = bookings.filter((b) => ["confirmed","requested"].includes(b.status) && isUpcoming(b.date, b.time)).sort((a,b) => parseDateTime(a.date,a.time) - parseDateTime(b.date,b.time))[0];
-        const expiryDays = getDaysUntilExpiry(currentMember.expiryDate);
-        const slotAvailable = (time) => !bookings.find((b) => b.date === selectedDate && b.time === time && b.status !== "cancelled" && b.status !== "deducted");
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {selectedRole === "member" ? (
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-600">회원 인증번호</span>
+                <input
+                  value={authCode}
+                  onChange={function (event) { setAuthCode(String(event.target.value).toUpperCase()); }}
+                  placeholder="예: PT123456"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+                />
+              </label>
+            ) : (
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-600">아이디</span>
+                <input
+                  value={loginId}
+                  onChange={function (event) { setLoginId(normalizeLoginId(event.target.value)); }}
+                  placeholder={selectedRole === "admin" ? "admin" : "trainer_kim"}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+                />
+              </label>
+            )}
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">비밀번호</span>
+              <input
+                type="password"
+                value={password}
+                onChange={function (event) { setPassword(event.target.value); }}
+                placeholder="a123456"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+              />
+            </label>
+          </div>
 
-        return (
-          <div className="page">
-            <SectionCard title="내 회원권 정보">
-              <div className="grid-2">
-                <div className="info-box"><div className="label">담당 강사</div><div className="value">{trainerName}</div></div>
-                <div className="info-box"><div className="label">총 횟수</div><div className="value">{currentMember.totalSessions}회</div></div>
-                <div className="info-box"><div className="label">다음 수업일</div><div className="value">{nextBooking ? `${formatDateLabel(nextBooking.date)} ${nextBooking.time}` : "없음"}</div></div>
-                <div className={`info-box ${pendingUsages.length > 0 ? "warning" : ""}`}><div className="label">미확인 차감</div><div className="value">{pendingUsages.length}건</div></div>
-                <div className={`info-box ${expiryDays <= 7 ? "danger" : expiryDays <= 30 ? "warning" : ""}`} style={{ gridColumn: "1 / -1" }}>
-                  <div className="label">만료일</div>
-                  <div className="row-between"><div className="value">{currentMember.expiryDate}</div><div className="label" style={{ fontWeight: 700 }}>{expiryDays}일 남음</div></div>
+          <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+            <p className="font-semibold text-slate-800">샘플 로그인 정보</p>
+            <p className="mt-1">회원: PT123456 / a123456</p>
+            <p className="mt-1">강사: trainer_kim / a123456</p>
+            <p className="mt-1">관리자: admin / a123456</p>
+            <p className="mt-2 text-slate-500">{loginMessage}</p>
+          </div>
+        </AppCard>
+
+        <AppCard className="mt-6">
+          <p className="font-bold">기본 규칙 테스트</p>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {tests.map(function (test) {
+              return (
+                <div key={test.name} className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm">
+                  <span className={test.pass ? "font-bold text-emerald-600" : "font-bold text-red-600"}>{test.pass ? "통과" : "실패"}</span>
+                  <span className="text-slate-600">{test.name}</span>
                 </div>
+              );
+            })}
+          </div>
+        </AppCard>
+      </div>
+    </div>
+  );
+}
+
+function DashboardLayout({ user, today, onLogout, onChangeOwnPassword, children }) {
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
+          <div>
+            <h1 className="text-lg font-bold">본앤밸런스 예약 관리</h1>
+            <p className="text-xs text-slate-500">{formatKoreanDate(today)}</p>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-bold">{user.name}</p>
+              <p className="text-xs text-slate-500">{ROLE_LABELS[user.role]} 세션</p>
+            </div>
+            <button
+              type="button"
+              onClick={function () { setIsPasswordModalOpen(true); }}
+              className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-100 sm:px-4 sm:text-sm"
+            >
+              비밀번호 변경
+            </button>
+            <button type="button" onClick={onLogout} className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-100 sm:px-4 sm:text-sm">
+              로그아웃
+            </button>
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+
+      {isPasswordModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-5 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold">비밀번호 변경</h2>
+                <p className="mt-1 text-sm text-slate-500">{ROLE_LABELS[user.role]} 계정의 비밀번호를 변경합니다.</p>
               </div>
-            </SectionCard>
-            <SectionCard title="알림">
-              {alerts.length === 0 ? <div className="muted">새로운 알림이 없습니다.</div> : alerts.map((alert) => <div key={alert.id} className="alert-box"><div className="alert-title">{alert.title}</div><div className="alert-text">{alert.message}</div></div>)}
-            </SectionCard>
-            <SectionCard title="차감 확인">
-              {pendingUsages.length === 0 ? <div className="muted">확인 대기 중인 수업이 없습니다.</div> : pendingUsages.map((usage) => <div key={usage.id} className="item"><div className="item-title">{formatDateLabel(usage.date)} {usage.time}</div><div className="muted" style={{ marginTop: 4 }}>강사: {trainerName}</div><div style={{ marginTop: 10 }}><ActionButton title="수업 확인하고 차감 확정" full onClick={() => onConfirmDeduction(usage.id)} /></div></div>)}
-            </SectionCard>
-            <SectionCard title="예약 달력" subtitle="회원은 본인 담당 강사의 빈 시간만 확인할 수 있습니다.">
-              <TextField label="날짜" value={selectedDate} onChange={setSelectedDate} type="date" />
-              <div className="slot-grid">
-                {TIME_SLOTS.map((time) => {
-                  const available = slotAvailable(time);
-                  return <button key={time} className={`slot ${available ? "" : "booked"}`} onClick={() => { setPendingTime(time); setConfirmOpen(true); }} disabled={!available}><div className="slot-time">{time}</div><div className="slot-status">{available ? "예약 가능" : "예약 불가"}</div></button>;
+              <button
+                type="button"
+                onClick={function () { setIsPasswordModalOpen(false); }}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                닫기
+              </button>
+            </div>
+            <PasswordChangeCard
+              roleLabel={ROLE_LABELS[user.role]}
+              onChangePassword={onChangeOwnPassword}
+              compact={true}
+              onDone={function () { setIsPasswordModalOpen(false); }}
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function PasswordChangeCard({ roleLabel, onChangePassword, compact, onDone }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState("비밀번호는 6자 이상으로 변경할 수 있습니다.");
+
+  function handleChangePassword() {
+    const result = validatePasswordChange({
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword,
+    });
+    if (!result.ok) {
+      setMessage(result.message);
+      return;
+    }
+
+    const changeResult = onChangePassword(currentPassword, newPassword);
+    if (!changeResult.ok) {
+      setMessage(changeResult.message);
+      return;
+    }
+
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setMessage(changeResult.message);
+    if (onDone) onDone();
+  }
+
+  const content = (
+    <>
+      {!compact ? <h2 className="text-xl font-bold">내 비밀번호 변경</h2> : null}
+      {!compact ? <p className="mt-2 text-sm text-slate-500">{roleLabel} 계정의 비밀번호를 변경합니다.</p> : null}
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <input type="password" value={currentPassword} onChange={function (event) { setCurrentPassword(event.target.value); }} placeholder="현재 비밀번호" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+        <input type="password" value={newPassword} onChange={function (event) { setNewPassword(event.target.value); }} placeholder="새 비밀번호" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+        <input type="password" value={confirmPassword} onChange={function (event) { setConfirmPassword(event.target.value); }} placeholder="새 비밀번호 확인" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+      </div>
+      <button type="button" onClick={handleChangePassword} className="mt-4 w-full rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white shadow-sm hover:bg-slate-700">비밀번호 변경</button>
+      <p className="mt-3 text-sm text-slate-500">{message}</p>
+    </>
+  );
+
+  if (compact) return content;
+  return <AppCard>{content}</AppCard>;
+}
+
+function MemberDashboard({ user, today, reservations, members, onAddReservation, onCancelReservation, onMemberConfirmLessonComplete, onChangeOwnPassword }) {
+  const memberInfo = findMemberByName(members, user.name) || user;
+  const expiryDate = addOneYear(memberInfo.firstLessonDate);
+  const remainingSessions = getRemainingSessions(memberInfo);
+  const nextLessonDate = getNextLessonDateForMember(reservations, user.name);
+  const todayString = toDateOnly(today);
+  const maxReservableDate = useMemo(function () {
+    return toDateOnly(addDays(today, 21));
+  }, [today]);
+  const timeSlots = useMemo(function () {
+    return generateTimeSlots();
+  }, []);
+  const [reservationDate, setReservationDate] = useState(todayString);
+  const [reservationTime, setReservationTime] = useState("08:00");
+  const [durationMinutes, setDurationMinutes] = useState(60);
+  const [message, setMessage] = useState("날짜, 시간, 수업 길이를 선택한 뒤 예약을 눌러주세요.");
+  const [cancelConfirmId, setCancelConfirmId] = useState(null);
+
+  const myReservations = sortReservations(reservations.filter(function (reservation) {
+    return reservation.memberName === user.name;
+  }));
+
+  const validation = validateReservationRequest({
+    reservations: reservations,
+    members: members,
+    memberName: user.name,
+    trainerName: user.trainerName,
+    date: reservationDate,
+    time: reservationTime,
+    durationMinutes: durationMinutes,
+    today: today,
+  });
+
+  function handleAddReservation() {
+    const result = validateReservationRequest({
+      reservations: reservations,
+      members: members,
+      memberName: user.name,
+      trainerName: user.trainerName,
+      date: reservationDate,
+      time: reservationTime,
+      durationMinutes: durationMinutes,
+      today: today,
+    });
+
+    if (!result.ok) {
+      setMessage(result.message);
+      return;
+    }
+
+    const newReservation = {
+      id: createReservationId(),
+      memberName: user.name,
+      trainerName: user.trainerName,
+      date: reservationDate,
+      time: reservationTime,
+      durationMinutes: Number(durationMinutes),
+      status: SESSION_STATUS.REQUESTED,
+    };
+
+    onAddReservation(newReservation);
+    setMessage("예약요청이 등록되었습니다. 강사 확인 후 예약확정으로 변경됩니다.");
+  }
+
+  function handleAskCancelReservation(reservation) {
+    if (!canMemberCancelReservation(reservation, today)) {
+      setMessage("수업 48시간 이내이거나 이미 수업완료/차감된 예약은 회원이 취소할 수 없습니다.");
+      return;
+    }
+
+    setCancelConfirmId(reservation.id);
+    setMessage("예약을 취소하려면 아래의 '확인' 버튼을 눌러주세요.");
+  }
+
+  function handleConfirmCancelReservation(reservation) {
+    if (!canMemberCancelReservation(reservation, today)) {
+      setCancelConfirmId(null);
+      setMessage("수업 48시간 이내이거나 이미 수업완료/차감된 예약은 회원이 취소할 수 없습니다.");
+      return;
+    }
+
+    onCancelReservation(reservation.id);
+    setCancelConfirmId(null);
+    setMessage("예약이 취소되었습니다. 취소된 예약은 기록으로 남습니다.");
+  }
+
+  function handleCancelCancelReservation() {
+    setCancelConfirmId(null);
+    setMessage("예약 취소를 중단했습니다.");
+  }
+
+  function handleMemberConfirmLessonComplete(reservation) {
+    if (!canMemberConfirmLessonComplete(reservation)) {
+      setMessage("회원 확인이 필요한 수업만 완료 확인할 수 있습니다.");
+      return;
+    }
+
+    onMemberConfirmLessonComplete(reservation);
+    setMessage("수업완료 확인이 끝났습니다. 회원권이 " + getDeductionByDuration(reservation.durationMinutes) + "회 차감되었습니다.");
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-4">
+        <StatCard emoji="🏋️" label="담당 강사" value={user.trainerName} description="내 강사의 예약 가능 시간만 표시" />
+        <StatCard emoji="✅" label="잔여 횟수" value={remainingSessions} description="1시간=1회 · 30분=0.5회" />
+        <StatCard emoji="⏰" label="다음 수업일" value={nextLessonDate || "없음"} description="예약 확정 기준" />
+        <StatCard emoji="📅" label="만료일" value={expiryDate} description="첫 수업일 기준 1년" />
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-2">
+        <AppCard>
+          <h2 className="text-xl font-bold">예약하기</h2>
+          <p className="mt-2 text-sm text-slate-500">오늘부터 3주 이내, 08:00~20:30, 30분 또는 1시간 단위로 예약할 수 있습니다.</p>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">예약 날짜</span>
+              <input
+                type="date"
+                value={reservationDate}
+                min={todayString}
+                max={maxReservableDate}
+                onChange={function (event) { setReservationDate(event.target.value); }}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">수업 길이</span>
+              <select
+                value={durationMinutes}
+                onChange={function (event) { setDurationMinutes(Number(event.target.value)); }}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+              >
+                <option value={60}>1시간 · 1회 차감</option>
+                <option value={30}>30분 · 0.5회 차감</option>
+              </select>
+            </label>
+
+            <div className="block sm:col-span-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-slate-600">예약 시간</span>
+                <span className="text-xs text-slate-400">1시간 선택 시 30분 칸 2개가 함께 표시됩니다.</span>
+              </div>
+              <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-7">
+                {timeSlots.map(function (slot) {
+                  const isBlocked = isSlotBlockedByReservation(reservations, user.trainerName, user.name, reservationDate, slot);
+                  const isOutOfRange = !isStartTimeSelectable(slot, durationMinutes);
+                  const isSelected = isSlotPartOfSelection(slot, reservationTime, durationMinutes);
+                  const isDisabled = isBlocked || isOutOfRange;
+                  let buttonClass = "border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50";
+
+                  if (isSelected) buttonClass = "border-slate-900 bg-slate-900 text-white shadow-sm";
+                  if (isBlocked) buttonClass = "cursor-not-allowed border-slate-200 bg-slate-200 text-slate-400 line-through";
+                  if (!isBlocked && isOutOfRange) buttonClass = "cursor-not-allowed border-slate-100 bg-slate-100 text-slate-300";
+
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={function () { setReservationTime(slot); }}
+                      className={"rounded-xl border px-2 py-2 text-xs font-semibold transition " + buttonClass}
+                      title={isBlocked ? "이미 예약된 시간입니다." : isOutOfRange ? "선택한 수업 길이가 예약 가능 시간을 벗어납니다." : slot}
+                    >
+                      {slot}
+                    </button>
+                  );
                 })}
               </div>
-            </SectionCard>
-            <SectionCard title="내 예약 관리">
-              {bookings.length === 0 ? <div className="muted">예약된 수업이 없습니다.</div> : bookings.map((booking) => <div key={booking.id} className="item"><div className="item-title">{formatDateLabel(booking.date)} {booking.time}</div><div className="muted" style={{ marginTop: 4 }}>강사: {trainerName}</div><div className="muted" style={{ marginTop: 4 }}>상태: {getBookingStatusLabel(booking.status)}</div><div style={{ marginTop: 10 }}>{canCancel(booking.date, booking.time) ? <ActionButton title="예약 취소" kind="secondary" full onClick={() => onCancelBooking(booking.id)} /> : <div className="soft-box"><div style={{ color: "#be123c", fontSize: 14 }}>수업 48시간 이내라 센터 문의가 필요합니다.</div></div>}</div></div>)}
-            </SectionCard>
-            <SectionCard title="리포트 / 알림">
-              {reports.length === 0 ? <div className="muted">리포트가 없습니다.</div> : reports.map((report) => <div key={report.id} className="soft-box" style={{ marginBottom: 10 }}><div className="item-title">{report.message}</div><div className="muted" style={{ marginTop: 6 }}>{report.createdAt}</div></div>)}
-            </SectionCard>
-            <Modal open={confirmOpen}>
-              <h3>예약 확인</h3>
-              <p>선택한 날짜와 시간으로 예약을 진행할까요?</p>
-              <div className="soft-box"><div className="muted" style={{ color: "#334155" }}>담당 강사: {trainerName}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>날짜: {selectedDate}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>시간: {pendingTime}</div></div>
-              <div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => { setConfirmOpen(false); setPendingTime(""); }} /><ActionButton title="예약하기" onClick={() => { onReserve(selectedDate, pendingTime); setConfirmOpen(false); setPendingTime(""); }} /></div>
-            </Modal>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1">선택 가능</span>
+                <span className="rounded-full border border-slate-900 bg-slate-900 px-3 py-1 text-white">선택됨</span>
+                <span className="rounded-full border border-slate-200 bg-slate-200 px-3 py-1 text-slate-400 line-through">예약됨</span>
+              </div>
+            </div>
           </div>
-        );
-      }
 
-      function TrainerPage({ trainer, members, bookings, alerts, onCreateTrainerBooking, onTrainerCancelBooking, onCompleteClass, onAddMember }) {
-        const [selectedDate, setSelectedDate] = useState(TODAY);
-        const [selectedTime, setSelectedTime] = useState("");
-        const [selectedMemberId, setSelectedMemberId] = useState(members[0]?.id || "");
-        const [createOpen, setCreateOpen] = useState(false);
-        const [confirmOpen, setConfirmOpen] = useState(false);
-        const [confirmAction, setConfirmAction] = useState(null);
-        const [memberModalOpen, setMemberModalOpen] = useState(false);
-        const [memberName, setMemberName] = useState("");
-        const [memberPhone, setMemberPhone] = useState("");
-        const [memberSessions, setMemberSessions] = useState("8");
-        const [firstLessonDate, setFirstLessonDate] = useState(TODAY);
-        const [weekStart, setWeekStart] = useState(getStartOfWeekSunday(selectedDate));
-        const activeMembers = members.filter((m) => getMemberStatus(m) === "active");
-        const availableMemberId = selectedMemberId || activeMembers[0]?.id || "";
-        const dayBookings = bookings.filter((b) => b.date === selectedDate && b.status !== "cancelled");
-        const weekDays = makeDateRange(weekStart, 7);
-        const slotBooking = (time) => dayBookings.find((b) => b.time === time);
+          <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+            <p className="font-semibold text-slate-800">예약 전 확인</p>
+            <p className="mt-1">선택: {reservationDate || "날짜 없음"} {reservationTime} · {durationMinutes}분 · 차감 예정 {getDeductionByDuration(durationMinutes)}회</p>
+            <p className={"mt-2 font-semibold " + (validation.ok ? "text-emerald-700" : "text-red-600")}>{validation.message}</p>
+          </div>
 
-        return (
-          <div className="page">
-            <SectionCard title="강사 일일 달력" subtitle={`${trainer.name} · 직접 예약 추가/취소/수업 완료 처리가 가능합니다.`}>
-              <TextField label="날짜" value={selectedDate} onChange={(value) => { setSelectedDate(value); setWeekStart(getStartOfWeekSunday(value)); }} type="date" />
-              {TIME_SLOTS.map((time) => {
-                const booking = slotBooking(time);
-                return <div key={time} className="item"><div className="row-between"><div><div className="item-title">{time}</div>{booking ? <><div className="muted" style={{ marginTop: 4 }}>회원: {members.find((m) => m.id === booking.memberId)?.name || "-"}</div><div className="muted" style={{ marginTop: 4 }}>상태: {getBookingStatusLabel(booking.status)}</div></> : <div className="muted" style={{ marginTop: 4 }}>비어 있음</div>}</div>{booking ? <div style={{ display: "grid", gap: 8, justifyItems: "end" }}><Pill label={getBookingStatusLabel(booking.status)} tone={getTone(booking.status)} />{(booking.status === "confirmed" || booking.status === "requested") && <ActionButton title="수업 완료 처리" onClick={() => onCompleteClass(booking.id)} />}{(booking.status === "confirmed" || booking.status === "requested") && <ActionButton title="예약 취소" kind="secondary" onClick={() => { setConfirmAction({ type: "cancel", payload: { booking } }); setConfirmOpen(true); }} />}</div> : <ActionButton title="예약 추가" kind="secondary" onClick={() => { setSelectedTime(time); setSelectedMemberId(activeMembers[0]?.id || ""); setCreateOpen(true); }} />}</div></div>;
-              })}
-            </SectionCard>
-            <SectionCard title="일일 캘린더" subtitle="선택한 하루 기준으로 예약을 확인">
-              <TextField label="날짜" value={selectedDate} onChange={(value) => setSelectedDate(value)} type="date" />
-              <div className="section-gap">
-                {bookings.filter((b) => b.date === selectedDate && b.status !== "cancelled").length === 0 ? (
-                  <div className="muted">해당 날짜에 예약이 없습니다.</div>
-                ) : (
-                  bookings
-                    .filter((b) => b.date === selectedDate && b.status !== "cancelled")
-                    .sort((a, b) => a.time.localeCompare(b.time))
-                    .map((entry) => {
-                      const tone = getTone(entry.status);
+          <button
+            type="button"
+            onClick={handleAddReservation}
+            className="mt-5 w-full rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white shadow-sm hover:bg-slate-700"
+          >
+            예약요청 등록
+          </button>
+
+          <p className="mt-3 text-sm text-slate-500">{message}</p>
+        </AppCard>
+
+        <AppCard>
+          <h2 className="text-xl font-bold">예약 가능 규칙</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-500">예약 가능 기간</p>
+              <p className="mt-1 text-lg font-bold">오늘부터 3주 이내</p>
+              <p className="mt-1 text-sm text-slate-500">최대 예약 가능일: {maxReservableDate}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-500">예약 가능 시간</p>
+              <p className="mt-1 text-lg font-bold">08:00 ~ 20:30</p>
+              <p className="mt-1 text-sm text-slate-500">30분 단위 선택</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-500">1일 예약 제한</p>
+              <p className="mt-1 text-lg font-bold">최대 2시간</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-500">1주 예약 제한</p>
+              <p className="mt-1 text-lg font-bold">총 8시간</p>
+              <p className="mt-1 text-sm text-slate-500">일요일~토요일 기준</p>
+            </div>
+          </div>
+        </AppCard>
+      </section>
+
+      <AppCard>
+        <h2 className="text-xl font-bold">내 예약관리</h2>
+        <div className="mt-4 space-y-3">
+          {myReservations.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">등록된 예약이 없습니다.</p> : null}
+          {myReservations.map(function (reservation) {
+            return (
+              <div key={reservation.id} className="rounded-2xl border border-slate-200 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-bold">{reservation.date} {reservation.time}</p>
+                    <p className="mt-1 text-sm text-slate-500">{reservation.durationMinutes}분 수업 · {reservation.trainerName} · 차감 예정 {getDeductionByDuration(reservation.durationMinutes)}회</p>
+                    {reservation.isManualDeduction ? <p className="mt-1 text-xs text-slate-400">강사 수동 차감 요청</p> : null}
+                  </div>
+                  <div className="flex flex-col items-start gap-2 sm:items-end">
+                    <StatusBadge status={reservation.status} />
+                    {canMemberCancelReservation(reservation, today) && cancelConfirmId !== reservation.id ? (
+                      <button
+                        type="button"
+                        onClick={function () { handleAskCancelReservation(reservation); }}
+                        className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
+                      >
+                        예약취소
+                      </button>
+                    ) : null}
+                    {canMemberCancelReservation(reservation, today) && cancelConfirmId === reservation.id ? (
+                      <div className="flex flex-wrap justify-end gap-2 rounded-2xl bg-red-50 p-2">
+                        <button
+                          type="button"
+                          onClick={function () { handleConfirmCancelReservation(reservation); }}
+                          className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700"
+                        >
+                          확인
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelCancelReservation}
+                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                        >
+                          아니오
+                        </button>
+                      </div>
+                    ) : null}
+                    {canMemberConfirmLessonComplete(reservation) ? (
+                      <button
+                        type="button"
+                        onClick={function () { handleMemberConfirmLessonComplete(reservation); }}
+                        className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                      >
+                        수업완료확인
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </AppCard>
+    </div>
+  );
+}
+
+function TrainerDashboard({ user, today, reservations, members, onUpdateReservationStatus, onCancelReservationWithPreviousStatus, onAddMember, onAddReservationFromTrainer, onResetMemberPassword, onChangeOwnPassword }) {
+  const trainerReservations = sortReservations(reservations.filter(function (reservation) {
+    return reservation.trainerName === user.name;
+  }));
+  const trainerMembers = members.filter(function (member) {
+    return member.trainerName === user.name && !member.isHidden;
+  });
+  const requestedCount = trainerReservations.filter(function (reservation) { return reservation.status === SESSION_STATUS.REQUESTED; }).length;
+  const waitingMemberConfirmCount = trainerReservations.filter(function (reservation) { return reservation.status === SESSION_STATUS.WAITING_MEMBER_CONFIRM; }).length;
+  const todayString = toDateOnly(today);
+  const [activePanel, setActivePanel] = useState("reservations");
+  const [trainerWeekOffset, setTrainerWeekOffset] = useState(0);
+  const [trainerDayDate, setTrainerDayDate] = useState(todayString);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberPhone, setNewMemberPhone] = useState("");
+  const [newMemberAddress, setNewMemberAddress] = useState("");
+  const [newMemberFirstDate, setNewMemberFirstDate] = useState(todayString);
+  const [newMemberSessions, setNewMemberSessions] = useState(22);
+  const [newMemberMessage, setNewMemberMessage] = useState("신규 회원 정보를 입력하면 인증번호가 자동 발행됩니다.");
+  const [lastAuthCode, setLastAuthCode] = useState("");
+  const [trainerBookingMemberId, setTrainerBookingMemberId] = useState("");
+  const [trainerBookingDate, setTrainerBookingDate] = useState(todayString);
+  const [trainerBookingTime, setTrainerBookingTime] = useState("08:00");
+  const [trainerBookingDuration, setTrainerBookingDuration] = useState(60);
+  const [trainerBookingMessage, setTrainerBookingMessage] = useState("회원을 선택한 뒤 강사가 대신 예약을 등록할 수 있습니다.");
+  const [manualDeductMemberId, setManualDeductMemberId] = useState("");
+  const [manualDeductDuration, setManualDeductDuration] = useState(60);
+  const [manualDeductMessage, setManualDeductMessage] = useState("수동 차감은 바로 차감되지 않고 회원확인 대기로 등록됩니다.");
+  const [selectedTrainerMemberId, setSelectedTrainerMemberId] = useState(null);
+  const [trainerMemberSearch, setTrainerMemberSearch] = useState("");
+  const [trainerReservationSearch, setTrainerReservationSearch] = useState("");
+  const [trainerReservationStatusFilter, setTrainerReservationStatusFilter] = useState("ALL");
+  const [pendingTrainerCancelId, setPendingTrainerCancelId] = useState(null);
+  const [passwordManageMessage, setPasswordManageMessage] = useState("회원 비밀번호를 초기 비밀번호 a123456으로 초기화할 수 있습니다.");
+  const trainerTimeSlots = useMemo(function () { return generateTimeSlots(); }, []);
+  const trainerWeekRange = getWeekOffsetRange(today, trainerWeekOffset);
+  const trainerWeekDays = getWeekDaysFromRange(trainerWeekRange);
+  const trainerWeekReservations = trainerReservations.filter(function (reservation) {
+    return reservation.status !== SESSION_STATUS.CANCELED && isDateInRange(reservation.date, trainerWeekRange.start, trainerWeekRange.end);
+  });
+  const trainerDayReservations = getReservationsForDate(trainerReservations, trainerDayDate);
+  const maxTrainerBookingDate = toDateOnly(addDays(today, 21));
+  const selectedBookingMember = trainerMembers.find(function (member) { return member.id === trainerBookingMemberId; }) || null;
+  const selectedManualDeductMember = trainerMembers.find(function (member) { return member.id === manualDeductMemberId; }) || null;
+  const selectedTrainerMember = trainerMembers.find(function (member) { return member.id === selectedTrainerMemberId; }) || null;
+  const searchedTrainerMembers = filterMembersBySearch(trainerMembers, trainerMemberSearch);
+  const filteredTrainerReservations = filterReservations(trainerReservations, trainerReservationSearch, trainerReservationStatusFilter);
+  const trainerBookingValidation = validateReservationRequest({
+    reservations: reservations,
+    members: members,
+    memberName: selectedBookingMember ? selectedBookingMember.name : "",
+    trainerName: user.name,
+    date: trainerBookingDate,
+    time: trainerBookingTime,
+    durationMinutes: trainerBookingDuration,
+    today: today,
+  });
+  const manualDeductValidation = validateManualDeduction({
+    member: selectedManualDeductMember,
+    durationMinutes: manualDeductDuration,
+  });
+
+  function handleConfirmReservation(reservation) {
+    if (!canTrainerConfirmReservation(reservation)) return;
+    onUpdateReservationStatus(reservation.id, SESSION_STATUS.CONFIRMED);
+  }
+
+  function handleCompleteReservation(reservation) {
+    if (!canTrainerCompleteReservation(reservation)) return;
+    onUpdateReservationStatus(reservation.id, SESSION_STATUS.WAITING_MEMBER_CONFIRM);
+  }
+
+  function handleAskTrainerCancel(reservation) {
+    setPendingTrainerCancelId(reservation.id);
+  }
+
+  function handleConfirmTrainerCancel(reservation) {
+    if (!canTrainerCancelReservation(reservation)) return;
+    onCancelReservationWithPreviousStatus(reservation.id);
+    setPendingTrainerCancelId(null);
+  }
+
+  function handleQuickPackage(count) {
+    setNewMemberSessions(count);
+  }
+
+  function handleAddMember() {
+    const result = validateNewMemberForm({
+      name: newMemberName,
+      phone: newMemberPhone,
+      address: newMemberAddress,
+      firstLessonDate: newMemberFirstDate,
+      totalSessions: newMemberSessions,
+    });
+
+    if (!result.ok) {
+      setNewMemberMessage(result.message);
+      return;
+    }
+
+    const authCode = createAuthCode();
+    const newMember = {
+      id: createMemberId(),
+      name: String(newMemberName).trim(),
+      trainerName: user.name,
+      phone: String(newMemberPhone).trim(),
+      address: String(newMemberAddress).trim(),
+      firstLessonDate: newMemberFirstDate,
+      totalSessions: Number(newMemberSessions),
+      usedSessions: 0,
+      nextLessonDate: null,
+      authCode: authCode,
+      initialPassword: "a123456",
+      isHidden: false,
+    };
+
+    onAddMember(newMember);
+    setLastAuthCode(authCode);
+    setNewMemberName("");
+    setNewMemberPhone("");
+    setNewMemberAddress("");
+    setNewMemberSessions(22);
+    setNewMemberMessage("회원이 추가되었습니다. 발행된 인증번호: " + authCode + " / 초기 비밀번호: a123456");
+  }
+
+  function handleTrainerAddReservation() {
+    const result = validateReservationRequest({
+      reservations: reservations,
+      memberName: selectedBookingMember ? selectedBookingMember.name : "",
+      trainerName: user.name,
+      date: trainerBookingDate,
+      time: trainerBookingTime,
+      durationMinutes: trainerBookingDuration,
+      today: today,
+    });
+
+    if (!result.ok) {
+      setTrainerBookingMessage(result.message);
+      return;
+    }
+
+    onAddReservationFromTrainer({
+      id: createReservationId(),
+      memberName: selectedBookingMember.name,
+      trainerName: user.name,
+      date: trainerBookingDate,
+      time: trainerBookingTime,
+      durationMinutes: Number(trainerBookingDuration),
+      status: SESSION_STATUS.CONFIRMED,
+    });
+    setTrainerBookingMessage("강사 예약이 등록되었습니다. 상태는 예약확정입니다.");
+  }
+
+  function handleManualDeduction() {
+    const result = validateManualDeduction({
+      member: selectedManualDeductMember,
+      durationMinutes: manualDeductDuration,
+    });
+
+    if (!result.ok) {
+      setManualDeductMessage(result.message);
+      return;
+    }
+
+    onAddReservationFromTrainer({
+      id: createReservationId(),
+      memberName: selectedManualDeductMember.name,
+      trainerName: user.name,
+      date: todayString,
+      time: "수동차감",
+      durationMinutes: Number(manualDeductDuration),
+      status: SESSION_STATUS.WAITING_MEMBER_CONFIRM,
+      isManualDeduction: true,
+    });
+    setManualDeductMessage("수동 차감 요청이 회원확인 대기로 등록되었습니다.");
+  }
+
+  function handleResetMemberPassword(member) {
+    onResetMemberPassword(member.id);
+    setPasswordManageMessage(member.name + " 회원 비밀번호를 a123456으로 초기화했습니다.");
+  }
+
+  function renderPanelButton(panelId, label, count) {
+    const isActive = activePanel === panelId;
+    return (
+      <button
+        key={panelId}
+        type="button"
+        onClick={function () { setActivePanel(panelId); }}
+        className={"rounded-2xl border px-4 py-3 text-sm font-semibold transition " + (isActive ? "border-slate-900 bg-slate-900 text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50")}
+      >
+        {label}{typeof count === "number" ? " " + count : ""}
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-4">
+        <StatCard emoji="👥" label="내 회원 수" value={trainerMembers.length} description="배정된 회원 기준" />
+        <StatCard emoji="📅" label="예약 수" value={trainerReservations.length} description="현재 예약 기준" />
+        <StatCard emoji="🟡" label="예약요청" value={requestedCount} description="강사 확인 필요" />
+        <StatCard emoji="⏳" label="회원확인 대기" value={waitingMemberConfirmCount} description="회원 최종 확인 필요" />
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
+          {renderPanelButton("weekCalendar", "주간달력")}
+          {renderPanelButton("dayView", "일별보기")}
+          {renderPanelButton("reservations", "예약관리", trainerReservations.length)}
+          {renderPanelButton("addMember", "회원추가")}
+          {renderPanelButton("trainerBooking", "예약등록")}
+          {renderPanelButton("manualDeduction", "수동차감")}
+          {renderPanelButton("members", "회원목록", trainerMembers.length)}
+        </div>
+      </section>
+
+      {activePanel === "weekCalendar" ? (
+        <AppCard>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold">주간 예약 달력</h2>
+              <p className="mt-1 text-sm text-slate-500">일요일~토요일 기준으로 내 예약을 시간대별로 확인합니다.</p>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={function () { setTrainerWeekOffset(trainerWeekOffset - 1); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">이전 주</button>
+              <button type="button" onClick={function () { setTrainerWeekOffset(0); }} className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">이번 주</button>
+              <button type="button" onClick={function () { setTrainerWeekOffset(trainerWeekOffset + 1); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">다음 주</button>
+            </div>
+          </div>
+
+          <div className={"mt-4 rounded-2xl p-4 " + (isCurrentWeekOffset(trainerWeekOffset) ? "bg-emerald-50 ring-2 ring-emerald-200" : "bg-slate-50")}>
+            <p className={"text-sm " + (isCurrentWeekOffset(trainerWeekOffset) ? "font-semibold text-emerald-700" : "text-slate-500")}>{isCurrentWeekOffset(trainerWeekOffset) ? "이번 주" : "선택 주차"}</p>
+            <p className={"mt-1 text-lg font-bold " + (isCurrentWeekOffset(trainerWeekOffset) ? "text-emerald-900" : "text-slate-900")}>{getWeekLabel(trainerWeekRange)} · 예약 {trainerWeekReservations.length}건</p>
+          </div>
+
+          <div className="mt-5 space-y-3 md:hidden">
+            {trainerWeekDays.map(function (day) {
+              const dayReservations = getReservationsForDate(trainerWeekReservations, day.date);
+              return (
+                <div key={day.date} className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-slate-900">{day.label}요일 · {day.dayNumber}일</p>
+                      <p className="mt-1 text-xs text-slate-400">{day.date}</p>
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{dayReservations.length}건</span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {dayReservations.length === 0 ? <p className="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-400">예약 없음</p> : null}
+                    {dayReservations.map(function (reservation) {
                       return (
-                        <div key={entry.id} className="item" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}>
-                          <div className="item-title">{entry.time}</div>
-                          <div className="muted" style={{ marginTop: 4 }}>
-                            {members.find((m) => m.id === entry.memberId)?.name || "-"}
-                          </div>
-                          <div className="muted" style={{ marginTop: 4 }}>
-                            상태: {getBookingStatusLabel(entry.status)}
-                          </div>
+                        <div key={reservation.id} className="rounded-xl bg-slate-900 px-3 py-3 text-white">
+                          <p className="text-sm font-bold">{reservation.time} · {reservation.memberName}</p>
+                          <p className="mt-1 text-xs opacity-80">{reservation.durationMinutes}분 · {reservation.status.split("_").join(" ")}</p>
                         </div>
                       );
-                    })
-                )}
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-slate-200 md:block">
+            <div className="min-w-[900px]">
+              <div className="grid grid-cols-[70px_repeat(7,1fr)] bg-slate-50 text-xs font-bold text-slate-500">
+                <div className="border-r border-slate-200 px-3 py-3">시간</div>
+                {trainerWeekDays.map(function (day) {
+                  return (
+                    <div key={day.date} className="border-r border-slate-200 px-3 py-3 text-center last:border-r-0">
+                      <p>{day.label}</p>
+                      <p className="mt-1 text-slate-900">{day.date}</p>
+                    </div>
+                  );
+                })}
               </div>
-            </SectionCard>
-            <SectionCard title="회원 목록">
-              <div style={{ marginBottom: 12 }}><ActionButton title="회원 등록" full onClick={() => setMemberModalOpen(true)} /></div>
-              {members.map((member) => <div key={member.id} className="item"><div className="row-between"><div style={{ flex: 1 }}><div className="item-title">{member.name}</div><div className="muted" style={{ marginTop: 4 }}>{member.phone}</div><div className="muted" style={{ marginTop: 4 }}>총 {member.totalSessions}회 · 남은 {member.remainingSessions}회 · 만료 {member.expiryDate}</div></div><Pill label={getMemberStatusLabel(member)} tone={getMemberStatusTone(member)} /></div></div>)}
-            </SectionCard>
-            <SectionCard title="회원 알림">
-              {alerts.length === 0 ? <div className="muted">확인할 알림이 없습니다.</div> : alerts.map((alert) => <div key={alert.id} className="alert-box"><div className="alert-title">{alert.title}</div><div className="alert-text">{alert.message}</div></div>)}
-            </SectionCard>
-            <Modal open={createOpen}><h3>강사 직접 예약 추가</h3><p>선택한 시간에 담당 회원을 배정합니다.</p><div className="soft-box"><div className="muted" style={{ color: "#334155" }}>강사: {trainer.name}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>날짜: {selectedDate}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>시간: {selectedTime}</div></div><TextField label="회원 ID" value={availableMemberId} onChange={setSelectedMemberId} placeholder="예: m1" /><div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => setCreateOpen(false)} /><ActionButton title="예약 등록" onClick={() => { if (!availableMemberId) return window.alert("회원 ID를 입력해 주세요."); setConfirmAction({ type: "create", payload: { trainerId: trainer.id, memberId: availableMemberId, date: selectedDate, time: selectedTime } }); setConfirmOpen(true); }} /></div></Modal>
-            <Modal open={confirmOpen}><h3>{confirmAction?.type === "cancel" ? "예약 취소 확인" : "예약 등록 확인"}</h3><p>{confirmAction?.type === "cancel" ? "해당 예약을 취소할까요?" : "선택한 시간에 예약을 등록할까요?"}</p><div className="soft-box">{confirmAction?.type === "cancel" ? <div className="muted" style={{ color: "#334155" }}>{confirmAction?.payload?.booking ? `${formatDateLabel(confirmAction.payload.booking.date)} ${confirmAction.payload.booking.time}` : ""}</div> : <><div className="muted" style={{ color: "#334155" }}>강사: {trainer.name}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>날짜: {selectedDate}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>시간: {selectedTime}</div><div className="muted" style={{ color: "#334155", marginTop: 4 }}>회원 ID: {availableMemberId}</div></>}</div><div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => { setConfirmOpen(false); setConfirmAction(null); }} /><ActionButton title="확인" onClick={() => { if (confirmAction?.type === "cancel") onTrainerCancelBooking(confirmAction.payload.booking.id); if (confirmAction?.type === "create") onCreateTrainerBooking(confirmAction.payload); setConfirmOpen(false); setConfirmAction(null); setCreateOpen(false); }} /></div></Modal>
-            <Modal open={memberModalOpen}><h3>회원 등록</h3><TextField label="회원 이름" value={memberName} onChange={setMemberName} placeholder="이름" /><TextField label="연락처" value={memberPhone} onChange={(v) => setMemberPhone(formatPhone(v))} placeholder="010-0000-0000" /><div className="row" style={{ marginBottom: 12 }}>{[8,22,57].map((n) => <ActionButton key={n} title={`${n}회`} kind="secondary" onClick={() => setMemberSessions(String(n))} />)}</div><TextField label="횟수권" value={memberSessions} onChange={setMemberSessions} type="number" /><TextField label="첫 수업일" value={firstLessonDate} onChange={setFirstLessonDate} type="date" /><div className="soft-box"><div className="muted" style={{ color: "#334155" }}>예상 만료일: {addOneYear(firstLessonDate || TODAY)}</div></div><div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => setMemberModalOpen(false)} /><ActionButton title="저장" onClick={() => { const total = Number(memberSessions); const digits = memberPhone.replace(/[^0-9]/g, ""); if (!memberName.trim()) return window.alert("회원 이름을 입력해 주세요."); if (digits.length < 10 || digits.length > 11) return window.alert("올바른 연락처를 입력해 주세요."); if (!Number.isInteger(total) || total < 1 || total > 57) return window.alert("횟수권은 1회부터 57회까지 입력해 주세요."); if (!firstLessonDate) return window.alert("첫 수업일을 입력해 주세요."); onAddMember({ name: memberName.trim(), phone: memberPhone, trainerId: trainer.id, totalSessions: total, firstLessonDate, expiryDate: addOneYear(firstLessonDate) }); setMemberModalOpen(false); setMemberName(""); setMemberPhone(""); setMemberSessions("8"); setFirstLessonDate(TODAY); }} /></div></Modal>
-          </div>
-        );
-      }
 
-      function AdminPage({ trainers, members, bookings, alerts, deletedBookings, onAdminDeleteBooking }) {
-        const [deleteOpen, setDeleteOpen] = useState(false);
-        const [deleteTarget, setDeleteTarget] = useState(null);
-        const [deleteReason, setDeleteReason] = useState("");
-        const [expandedTrainerId, setExpandedTrainerId] = useState(null);
-        const allMembersRef = useRef(null);
-        const todayBookingsRef = useRef(null);
-        const awaitingRef = useRef(null);
-        const attentionRef = useRef(null);
-        const bookingSummary = {
-          requested: bookings.filter((b) => b.status === "requested").length,
-          confirmed: bookings.filter((b) => b.status === "confirmed").length,
-          awaiting: bookings.filter((b) => b.status === "awaiting_member_confirmation").length,
-          deducted: bookings.filter((b) => b.status === "deducted").length,
-        };
-        const expiringSoon = members.filter((m) => getMemberStatus(m) === "active" && (m.remainingSessions <= 5 || getDaysUntilExpiry(m.expiryDate) <= 30));
-        const expiredMembers = members.filter((m) => getMemberStatus(m) === "expired");
-        const completedMembers = members.filter((m) => getMemberStatus(m) === "completed");
-        const summaryCards = [
-          { title: "전체 회원", value: `${members.length}명`, onClick: () => allMembersRef.current?.scrollIntoView({ behavior: "smooth" }) },
-          { title: "오늘 예약", value: `${bookings.filter((b) => b.date === TODAY && b.status !== "cancelled").length}건`, onClick: () => todayBookingsRef.current?.scrollIntoView({ behavior: "smooth" }) },
-          { title: "차감 대기", value: `${bookings.filter((b) => b.status === "awaiting_member_confirmation").length}건`, onClick: () => awaitingRef.current?.scrollIntoView({ behavior: "smooth" }) },
-          { title: "주의 회원", value: `${expiringSoon.length}명`, onClick: () => attentionRef.current?.scrollIntoView({ behavior: "smooth" }) },
-        ];
-        return (
-          <div className="page">
-            <SectionCard title="관리자 요약">
-              <div className="summary-grid">{summaryCards.map((card) => <button key={card.title} className="summary-btn" onClick={card.onClick}><div className="label">{card.title}</div><div className="summary-value">{card.value}</div></button>)}</div>
-            </SectionCard>
-            <SectionCard title="예약 상태 요약"><div className="grid-2"><div className="info-box"><div className="label">예약 요청</div><div className="value" style={{ color: "#6d28d9" }}>{bookingSummary.requested}건</div></div><div className="info-box"><div className="label">예약 확정</div><div className="value" style={{ color: "#2563eb" }}>{bookingSummary.confirmed}건</div></div><div className="info-box warning"><div className="label">회원 확인 대기</div><div className="value" style={{ color: "#b45309" }}>{bookingSummary.awaiting}건</div></div><div className="info-box"><div className="label">차감 완료</div><div className="value" style={{ color: "#059669" }}>{bookingSummary.deducted}건</div></div></div></SectionCard>
-            <SectionCard title="강사별 회원 현황" subtitle="강사 이름 클릭 시 회원 내용을 한 줄로 확인" innerRef={allMembersRef}>{trainers.map((trainer) => { const trainerMembers = members.filter((m) => m.trainerId === trainer.id); const expanded = expandedTrainerId === trainer.id; return <div key={trainer.id} className="item"><div className="row-between"><button onClick={() => setExpandedTrainerId(expanded ? null : trainer.id)} style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", flex: 1 }}><div className="item-title">{trainer.name}</div><div className="muted" style={{ marginTop: 4 }}>회원 수 {trainerMembers.length}명</div><div className="muted" style={{ marginTop: 4, fontSize: 12 }}>{trainer.phone} · {trainer.specialty}</div></button><ActionButton title={expanded ? "접기" : "열기"} kind="secondary" onClick={() => setExpandedTrainerId(expanded ? null : trainer.id)} /></div>{expanded ? <div style={{ marginTop: 12 }}><div className="trainer-table-head"><div>상태</div><div>성명</div><div>연락처</div><div>최초수업일</div><div>마지막수업일</div><div>사용횟수</div><div>잔여횟수</div></div>{trainerMembers.map((member) => <div key={member.id} className="trainer-table-row"><div><Pill label={getMemberStatusLabel(member)} tone={getMemberStatusTone(member)} /></div><div>{member.name}</div><div>{member.phone}</div><div>{member.firstLessonDate}</div><div>{getLastLessonDate(member.id, bookings)}</div><div>{getUsedSessions(member)}회</div><div>{member.remainingSessions}회</div></div>)}</div> : null}</div>; })}</SectionCard>
-            <SectionCard title="차감 대기 목록" innerRef={awaitingRef}>{bookings.filter((b) => b.status === "awaiting_member_confirmation").length === 0 ? <div className="muted">차감 대기 예약이 없습니다.</div> : bookings.filter((b) => b.status === "awaiting_member_confirmation").map((booking) => { const member = members.find((m) => m.id === booking.memberId); const trainer = trainers.find((t) => t.id === booking.trainerId); return <div key={booking.id} className="alert-box"><div className="alert-title">{formatDateLabel(booking.date)} {booking.time}</div><div className="alert-text">회원: {member?.name || "-"}</div><div className="alert-text">강사: {trainer?.name || "-"}</div></div>; })}</SectionCard>
-            <SectionCard title="자동 알림">{alerts.length === 0 ? <div className="muted">현재 자동 알림 대상이 없습니다.</div> : alerts.map((alert) => <div key={alert.id} className="alert-box"><div className="alert-title">{alert.title}</div><div className="alert-text">{alert.message}</div><div className="alert-text" style={{ fontSize: 12 }}>담당 강사: {alert.trainerName}</div></div>)}</SectionCard>
-            <SectionCard title="오늘 예약 / 최근 예약" innerRef={todayBookingsRef}>{bookings.slice().sort((a,b) => parseDateTime(b.date,b.time) - parseDateTime(a.date,a.time)).map((booking) => { const member = members.find((m) => m.id === booking.memberId); const trainer = trainers.find((t) => t.id === booking.trainerId); return <div key={booking.id} className="item"><div className="row-between"><div><div className="item-title">{formatDateLabel(booking.date)} {booking.time}</div><div className="muted" style={{ marginTop: 4 }}>강사: {trainer?.name || "-"}</div><div className="muted" style={{ marginTop: 4 }}>회원: {member?.name || "-"}</div><div className="muted" style={{ marginTop: 4 }}>상태: {getBookingStatusLabel(booking.status)}</div></div><ActionButton title="수업 삭제" kind="secondary" onClick={() => { setDeleteTarget(booking); setDeleteOpen(true); }} /></div></div>; })}</SectionCard>
-            <SectionCard title="예약 삭제 이력">{deletedBookings.length === 0 ? <div className="muted">삭제 이력이 없습니다.</div> : deletedBookings.map((deleted) => <div key={deleted.id} className="soft-box" style={{ marginBottom: 10 }}><div className="item-title">{formatDateLabel(deleted.date)} {deleted.time}</div><div className="muted" style={{ marginTop: 4 }}>강사: {deleted.trainerName}</div><div className="muted" style={{ marginTop: 4 }}>회원: {deleted.memberName}</div><div className="muted" style={{ marginTop: 4 }}>이전 상태: {getBookingStatusLabel(deleted.previousStatus)}</div><div className="muted" style={{ marginTop: 4, color: "#334155" }}>삭제 사유: {deleted.reason}</div><div className="muted" style={{ marginTop: 4, fontSize: 12 }}>삭제 시각: {deleted.deletedAt}</div></div>)}</SectionCard>
-            <SectionCard title="만료 회원">{expiredMembers.length === 0 ? <div className="muted">만료된 회원이 없습니다.</div> : expiredMembers.map((member) => <div key={member.id} className="alert-box" style={{ background: "#fff1f2", borderColor: "#fda4af" }}><div className="alert-title" style={{ color: "#be123c" }}>{member.name}</div><div className="alert-text" style={{ color: "#be123c" }}>만료일: {member.expiryDate}</div></div>)}</SectionCard>
-            <SectionCard title="사용완료 회원">{completedMembers.length === 0 ? <div className="muted">사용완료된 회원이 없습니다.</div> : completedMembers.map((member) => <div key={member.id} className="alert-box"><div className="alert-title">{member.name}</div><div className="alert-text">잔여 횟수: {member.remainingSessions}회</div></div>)}</SectionCard>
-            <SectionCard title="만료 / 소진 주의" innerRef={attentionRef}>{expiringSoon.length === 0 ? <div className="muted">주의 대상 회원이 없습니다.</div> : expiringSoon.map((member) => <div key={member.id} className="alert-box"><div className="alert-title">{member.name}</div><div className="alert-text">남은 횟수: {member.remainingSessions}회</div><div className="alert-text">만료일: {member.expiryDate}</div></div>)}</SectionCard>
-            <Modal open={deleteOpen}><h3>수업 삭제 확인</h3><p>삭제 사유를 입력해야 수업을 삭제할 수 있습니다.</p><div className="soft-box"><div className="muted" style={{ color: "#334155" }}>{deleteTarget ? `${formatDateLabel(deleteTarget.date)} ${deleteTarget.time}` : ""}</div></div><TextField label="삭제 사유" value={deleteReason} onChange={setDeleteReason} placeholder="예: 강사 입력 실수" /><div className="modal-actions"><ActionButton title="닫기" kind="secondary" onClick={() => { setDeleteOpen(false); setDeleteReason(""); setDeleteTarget(null); }} /><ActionButton title="삭제하기" onClick={() => { if (!deleteReason.trim()) return window.alert("삭제 사유를 입력해 주세요."); onAdminDeleteBooking(deleteTarget.id, deleteReason.trim()); setDeleteOpen(false); setDeleteReason(""); setDeleteTarget(null); }} /></div></Modal>
+              {trainerTimeSlots.map(function (slot) {
+                return (
+                  <div key={slot} className="grid grid-cols-[70px_repeat(7,1fr)] border-t border-slate-200 text-xs">
+                    <div className="border-r border-slate-200 bg-slate-50 px-3 py-3 font-semibold text-slate-500">{slot}</div>
+                    {trainerWeekDays.map(function (day) {
+                      const slotReservations = getReservationsForSlot(trainerWeekReservations, day.date, slot);
+                      return (
+                        <div key={day.date + slot} className="min-h-[42px] border-r border-slate-200 p-1.5 last:border-r-0">
+                          {slotReservations.map(function (reservation) {
+                            return (
+                              <div key={reservation.id + slot} className="rounded-lg bg-slate-900 px-2 py-1.5 text-white shadow-sm">
+                                <p className="truncate font-bold">{reservation.memberName}</p>
+                                <p className="mt-0.5 truncate opacity-80">{reservation.durationMinutes}분</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        );
-      }
+          <p className="mt-3 text-xs text-slate-400">모바일에서는 요일별 카드로, PC에서는 주간 시간표로 확인할 수 있습니다.</p>
+        </AppCard>
+      ) : null}
 
-      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-    </script>
-  </body>
-</html>
+      {activePanel === "dayView" ? (
+        <AppCard>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold">일별 예약 보기</h2>
+              <p className="mt-1 text-sm text-slate-500">선택한 날짜의 예약을 시간순으로 확인합니다.</p>
+            </div>
+            <label className="block min-w-[220px]">
+              <span className="text-sm font-semibold text-slate-600">날짜 선택</span>
+              <input
+                type="date"
+                value={trainerDayDate}
+                onChange={function (event) { setTrainerDayDate(event.target.value); }}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+              />
+            </label>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">선택 날짜</p>
+              <p className="mt-1 text-lg font-bold">{trainerDayDate}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">예약 수</p>
+              <p className="mt-1 text-2xl font-bold">{trainerDayReservations.length}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">차감 대기</p>
+              <p className="mt-1 text-2xl font-bold">{trainerDayReservations.filter(function (reservation) { return reservation.status === SESSION_STATUS.WAITING_MEMBER_CONFIRM; }).length}</p>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {trainerDayReservations.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">선택한 날짜의 예약이 없습니다.</p> : null}
+            {trainerDayReservations.map(function (reservation) {
+              return (
+                <div key={reservation.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-bold">{reservation.time} · {reservation.memberName}</p>
+                      <p className="mt-1 text-sm text-slate-500">{reservation.durationMinutes}분 · 차감 예정 {getDeductionByDuration(reservation.durationMinutes)}회</p>
+                      <p className="mt-1 text-xs text-slate-400">{getReservationStatusActionText(reservation.status)}</p>
+                    </div>
+                    <div className="flex flex-col items-start gap-2 sm:items-end">
+                      <StatusBadge status={reservation.status} />
+                      {canTrainerConfirmReservation(reservation) ? (
+                        <button type="button" onClick={function () { handleConfirmReservation(reservation); }} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">예약확정</button>
+                      ) : null}
+                      {canTrainerCompleteReservation(reservation) ? (
+                        <button type="button" onClick={function () { handleCompleteReservation(reservation); }} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">수업완료</button>
+                      ) : null}
+                      {canTrainerCancelReservation(reservation) && pendingTrainerCancelId !== reservation.id ? (
+                        <button type="button" onClick={function () { handleAskTrainerCancel(reservation); }} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100">예약취소</button>
+                      ) : null}
+                      {canTrainerCancelReservation(reservation) && pendingTrainerCancelId === reservation.id ? (
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={function () { handleConfirmTrainerCancel(reservation); }} className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700">확인</button>
+                          <button type="button" onClick={function () { setPendingTrainerCancelId(null); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">아니오</button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AppCard>
+      ) : null}
+
+      {activePanel === "reservations" ? (
+        <AppCard>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold">예약 관리</h2>
+              <p className="mt-2 text-sm text-slate-500">예약요청은 예약확정으로, 예약확정은 수업완료 처리 후 회원확인 대기로 변경합니다.</p>
+            </div>
+            <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600">검색 결과 {filteredTrainerReservations.length}건</div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px]">
+            <input
+              value={trainerReservationSearch}
+              onChange={function (event) { setTrainerReservationSearch(event.target.value); }}
+              placeholder="회원명 / 날짜 / 시간 검색"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+            />
+            <select
+              value={trainerReservationStatusFilter}
+              onChange={function (event) { setTrainerReservationStatusFilter(event.target.value); }}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+            >
+              <option value="ALL">전체 상태</option>
+              <option value={SESSION_STATUS.REQUESTED}>예약요청</option>
+              <option value={SESSION_STATUS.CONFIRMED}>예약확정</option>
+              <option value={SESSION_STATUS.WAITING_MEMBER_CONFIRM}>차감대기</option>
+              <option value={SESSION_STATUS.DEDUCTED}>차감완료</option>
+              <option value={SESSION_STATUS.CANCELED}>예약취소</option>
+            </select>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {filteredTrainerReservations.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">검색 조건에 맞는 예약이 없습니다.</p> : null}
+            {filteredTrainerReservations.map(function (reservation) {
+              return (
+                <div key={reservation.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-bold">{reservation.date} {reservation.time}</p>
+                      <p className="mt-1 text-sm text-slate-500">{reservation.memberName} · {reservation.durationMinutes}분 · 차감 예정 {getDeductionByDuration(reservation.durationMinutes)}회</p>
+                      {reservation.isManualDeduction ? <p className="mt-1 text-xs text-slate-400">수동 차감 요청</p> : null}
+                      <p className="mt-2 text-xs text-slate-400">{getReservationStatusActionText(reservation.status)}</p>
+                    </div>
+                    <div className="flex flex-col items-start gap-2 sm:items-end">
+                      <StatusBadge status={reservation.status} />
+                      {canTrainerConfirmReservation(reservation) ? (
+                        <button type="button" onClick={function () { handleConfirmReservation(reservation); }} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">예약확정</button>
+                      ) : null}
+                      {canTrainerCompleteReservation(reservation) ? (
+                        <button type="button" onClick={function () { handleCompleteReservation(reservation); }} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">수업완료</button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AppCard>
+      ) : null}
+
+      {activePanel === "addMember" ? (
+        <AppCard>
+          <h2 className="text-xl font-bold">회원 추가</h2>
+          <p className="mt-2 text-sm text-slate-500">회원 등록 시 인증번호가 발행되고, 첫 수업일 기준으로 만료일이 1년 뒤로 계산됩니다.</p>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">회원 이름</span>
+              <input value={newMemberName} onChange={function (event) { setNewMemberName(event.target.value); }} placeholder="예: 홍길동" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">연락처</span>
+              <input value={newMemberPhone} onChange={function (event) { setNewMemberPhone(formatPhoneNumber(event.target.value)); }} placeholder="010-0000-0000" inputMode="numeric" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="text-sm font-semibold text-slate-600">주소</span>
+              <input value={newMemberAddress} onChange={function (event) { setNewMemberAddress(event.target.value); }} placeholder="주소 입력" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">첫 수업일</span>
+              <input type="date" value={newMemberFirstDate} onChange={function (event) { setNewMemberFirstDate(event.target.value); }} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">회원권 횟수</span>
+              <input type="number" min="1" max="57" value={newMemberSessions} onChange={function (event) { setNewMemberSessions(Number(event.target.value)); }} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+            </label>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[8, 22, 57].map(function (count) {
+              return <button key={count} type="button" onClick={function () { handleQuickPackage(count); }} className={"rounded-xl border px-3 py-2 text-xs font-semibold " + (Number(newMemberSessions) === count ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50")}>{count}회</button>;
+            })}
+          </div>
+
+          <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+            <p>만료 예정일: {newMemberFirstDate ? addOneYear(newMemberFirstDate) : "첫 수업일 선택 필요"}</p>
+            <p className="mt-1">초기 비밀번호: a123456</p>
+            {lastAuthCode ? <p className="mt-1 font-semibold text-slate-900">최근 발행 인증번호: {lastAuthCode}</p> : null}
+          </div>
+
+          <button type="button" onClick={handleAddMember} className="mt-4 w-full rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white shadow-sm hover:bg-slate-700">회원 추가 및 인증번호 발행</button>
+          <p className="mt-3 text-sm text-slate-500">{newMemberMessage}</p>
+        </AppCard>
+      ) : null}
+
+      {activePanel === "trainerBooking" ? (
+        <AppCard>
+          <h2 className="text-xl font-bold">강사 예약 등록</h2>
+          <p className="mt-2 text-sm text-slate-500">전화나 메시지로 받은 예약을 강사가 직접 등록합니다. 등록 즉시 예약확정 상태가 됩니다.</p>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">회원 선택</span>
+              <select value={trainerBookingMemberId} onChange={function (event) { setTrainerBookingMemberId(event.target.value); }} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900">
+                <option value="">회원 선택</option>
+                {trainerMembers.map(function (member) { return <option key={member.id} value={member.id}>{member.name} · 잔여 {getRemainingSessions(member)}회</option>; })}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">예약 날짜</span>
+              <input type="date" value={trainerBookingDate} min={todayString} max={maxTrainerBookingDate} onChange={function (event) { setTrainerBookingDate(event.target.value); }} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">수업 길이</span>
+              <select value={trainerBookingDuration} onChange={function (event) { setTrainerBookingDuration(Number(event.target.value)); }} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900">
+                <option value={60}>1시간 · 1회</option>
+                <option value={30}>30분 · 0.5회</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-7">
+            {trainerTimeSlots.map(function (slot) {
+              const memberName = selectedBookingMember ? selectedBookingMember.name : "";
+              const isBlocked = isSlotBlockedByReservation(reservations, user.name, memberName, trainerBookingDate, slot);
+              const isOutOfRange = !isStartTimeSelectable(slot, trainerBookingDuration);
+              const isSelected = isSlotPartOfSelection(slot, trainerBookingTime, trainerBookingDuration);
+              const isDisabled = isBlocked || isOutOfRange;
+              let buttonClass = "border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50";
+              if (isSelected) buttonClass = "border-slate-900 bg-slate-900 text-white shadow-sm";
+              if (isBlocked) buttonClass = "cursor-not-allowed border-slate-200 bg-slate-200 text-slate-400 line-through";
+              if (!isBlocked && isOutOfRange) buttonClass = "cursor-not-allowed border-slate-100 bg-slate-100 text-slate-300";
+              return <button key={slot} type="button" disabled={isDisabled} onClick={function () { setTrainerBookingTime(slot); }} className={"rounded-xl border px-2 py-2 text-xs font-semibold transition " + buttonClass}>{slot}</button>;
+            })}
+          </div>
+
+          <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+            <p>선택: {selectedBookingMember ? selectedBookingMember.name : "회원 없음"} · {trainerBookingDate} {trainerBookingTime} · {trainerBookingDuration}분</p>
+            <p className={"mt-2 font-semibold " + (trainerBookingValidation.ok ? "text-emerald-700" : "text-red-600")}>{trainerBookingValidation.message}</p>
+          </div>
+
+          <button type="button" onClick={handleTrainerAddReservation} className="mt-4 w-full rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white shadow-sm hover:bg-slate-700">강사 예약 등록</button>
+          <p className="mt-3 text-sm text-slate-500">{trainerBookingMessage}</p>
+        </AppCard>
+      ) : null}
+
+      {activePanel === "manualDeduction" ? (
+        <AppCard>
+          <h2 className="text-xl font-bold">수동 차감 요청</h2>
+          <p className="mt-2 text-sm text-slate-500">수동 차감은 회원 확인 전까지 실제 차감되지 않습니다.</p>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">회원 선택</span>
+              <select value={manualDeductMemberId} onChange={function (event) { setManualDeductMemberId(event.target.value); }} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900">
+                <option value="">회원 선택</option>
+                {trainerMembers.map(function (member) { return <option key={member.id} value={member.id}>{member.name} · 잔여 {getRemainingSessions(member)}회</option>; })}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-600">차감 길이</span>
+              <select value={manualDeductDuration} onChange={function (event) { setManualDeductDuration(Number(event.target.value)); }} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900">
+                <option value={60}>1시간 · 1회</option>
+                <option value={30}>30분 · 0.5회</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+            <p>차감 예정: {getDeductionByDuration(manualDeductDuration)}회</p>
+            <p className={"mt-2 font-semibold " + (manualDeductValidation.ok ? "text-emerald-700" : "text-red-600")}>{manualDeductValidation.message}</p>
+          </div>
+
+          <button type="button" onClick={handleManualDeduction} className="mt-4 w-full rounded-2xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-sm hover:bg-emerald-700">회원확인 대기로 등록</button>
+          <p className="mt-3 text-sm text-slate-500">{manualDeductMessage}</p>
+        </AppCard>
+      ) : null}
+
+      {activePanel === "members" ? (
+        <div className="space-y-5">
+          {selectedTrainerMember ? (
+            <MemberDetailCard
+              member={selectedTrainerMember}
+              reservations={reservations}
+              todayString={todayString}
+              onClose={function () { setSelectedTrainerMemberId(null); }}
+            />
+          ) : null}
+
+          <AppCard>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold">내 회원 목록</h2>
+                <p className="mt-1 text-sm text-slate-500">이름, 연락처, 주소로 회원을 검색할 수 있습니다.</p>
+              </div>
+              <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600">검색 결과 {searchedTrainerMembers.length}명</div>
+            </div>
+            <input
+              value={trainerMemberSearch}
+              onChange={function (event) { setTrainerMemberSearch(event.target.value); }}
+              placeholder="회원 이름 / 연락처 검색"
+              className="mt-4 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+            />
+            <div className="mt-4 space-y-3">
+              {searchedTrainerMembers.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">검색 결과가 없습니다.</p> : null}
+              {searchedTrainerMembers.map(function (member) {
+                const nextLesson = getNextLessonDateForMember(reservations, member.name);
+                const isSelectedMember = selectedTrainerMemberId === member.id;
+                return (
+                  <div key={member.id} className={"rounded-2xl p-4 " + (isSelectedMember ? "border border-slate-900 bg-white" : "bg-slate-50")}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-bold">{member.name}</p>
+                          <MemberStatusBadge member={member} todayString={todayString} />
+                        </div>
+                        <p className="mt-1 text-sm text-slate-500">{member.phone}</p>
+                        <p className="mt-1 text-xs text-slate-400">만료일 {addOneYear(member.firstLessonDate)}</p>
+                        <p className="mt-1 text-xs text-slate-400">다음 수업 {nextLesson}</p>
+                      </div>
+                      <div className="flex flex-col items-start gap-2 sm:items-end">
+                        <div className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-700 shadow-sm">잔여 {getRemainingSessions(member)}</div>
+                        <button type="button" onClick={function () { setSelectedTrainerMemberId(member.id); }} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">상세보기</button>
+                        <button type="button" onClick={function () { handleResetMemberPassword(member); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">PW 초기화</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-sm text-slate-500">{passwordManageMessage}</p>
+          </AppCard>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AdminDashboard({ today, reservations, members, trainers, onAddTrainer, onHideTrainer, onHideMember, onRestoreTrainer, onRestoreMember, onCancelReservationWithPreviousStatus, onRestoreReservationStatus, onResetTrainerPassword, onChangeOwnPassword }) {
+  const todayString = toDateOnly(today);
+  const [activeAdminPanel, setActiveAdminPanel] = useState("summary");
+  const [weekOffset, setWeekOffset] = useState(0);
+  const visibleMembers = members.filter(function (member) { return !member.isHidden; });
+  const hiddenMembers = members.filter(function (member) { return member.isHidden; });
+  const visibleTrainers = trainers.filter(function (trainer) { return !trainer.isHidden; });
+  const hiddenTrainers = trainers.filter(function (trainer) { return trainer.isHidden; });
+  const todayReservations = reservations.filter(function (reservation) { return reservation.date === todayString; });
+  const lowSessionMembers = visibleMembers.filter(function (member) { return getRemainingSessions(member) > 0 && getRemainingSessions(member) <= 2; });
+  const expiredMembers = visibleMembers.filter(function (member) { return addOneYear(member.firstLessonDate) < todayString; });
+  const completedMembers = visibleMembers.filter(function (member) { return getRemainingSessions(member) === 0; });
+  const activeMembers = visibleMembers.filter(function (member) {
+    return getRemainingSessions(member) > 0 && addOneYear(member.firstLessonDate) >= todayString;
+  });
+  const trainerNames = Array.from(new Set(visibleTrainers.map(function (trainer) { return trainer.name; }).concat(visibleMembers.map(function (member) { return member.trainerName; }))));
+  const trainerSummaries = trainerNames.map(function (trainerName) {
+    const trainerMembers = visibleMembers.filter(function (member) { return member.trainerName === trainerName; });
+    const trainerReservations = reservations.filter(function (reservation) {
+      return reservation.trainerName === trainerName && reservation.status !== SESSION_STATUS.CANCELED;
+    });
+    return {
+      trainerName: trainerName,
+      memberCount: trainerMembers.length,
+      reservationCount: trainerReservations.length,
+    };
+  });
+  const selectedWeekRange = getWeekOffsetRange(today, weekOffset);
+  const selectedWeekReservations = reservations.filter(function (reservation) {
+    return reservation.status !== SESSION_STATUS.CANCELED && isDateInRange(reservation.date, selectedWeekRange.start, selectedWeekRange.end);
+  });
+  const selectedWeekNewMembers = visibleMembers.filter(function (member) {
+    return isDateInRange(member.firstLessonDate, selectedWeekRange.start, selectedWeekRange.end);
+  });
+  const selectedWeekTrainerSummaries = trainerNames.map(function (trainerName) {
+    const weeklyReservations = selectedWeekReservations.filter(function (reservation) {
+      return reservation.trainerName === trainerName;
+    });
+    const weeklyNewMembers = selectedWeekNewMembers.filter(function (member) {
+      return member.trainerName === trainerName;
+    });
+    return {
+      trainerName: trainerName,
+      reservationCount: weeklyReservations.length,
+      newMemberCount: weeklyNewMembers.length,
+    };
+  });
+  const [newTrainerName, setNewTrainerName] = useState("");
+  const [newTrainerLoginId, setNewTrainerLoginId] = useState("");
+  const [newTrainerPhone, setNewTrainerPhone] = useState("");
+  const [trainerManageMessage, setTrainerManageMessage] = useState("강사 등록 시 초기 비밀번호는 a123456으로 발급됩니다.");
+  const [pendingHideMemberId, setPendingHideMemberId] = useState(null);
+  const [pendingHideTrainerId, setPendingHideTrainerId] = useState(null);
+  const [restoreMessage, setRestoreMessage] = useState("숨김 처리된 회원과 강사를 확인하고 복구할 수 있습니다.");
+  const [selectedAdminMemberId, setSelectedAdminMemberId] = useState(null);
+  const [adminMemberSearch, setAdminMemberSearch] = useState("");
+  const [adminReservationSearch, setAdminReservationSearch] = useState("");
+  const [adminReservationStatusFilter, setAdminReservationStatusFilter] = useState("ALL");
+  const [pendingAdminCancelReservationId, setPendingAdminCancelReservationId] = useState(null);
+  const [adminPasswordManageMessage, setAdminPasswordManageMessage] = useState("강사 비밀번호를 초기 비밀번호 a123456으로 초기화할 수 있습니다.");
+
+  const searchedAdminMembers = filterMembersBySearch(visibleMembers, adminMemberSearch);
+  const filteredTodayReservations = filterReservations(todayReservations, adminReservationSearch, adminReservationStatusFilter);
+
+  function handleAddTrainer() {
+    const result = validateTrainerForm({
+      name: newTrainerName,
+      loginId: newTrainerLoginId,
+      phone: newTrainerPhone,
+    }, trainers);
+
+    if (!result.ok) {
+      setTrainerManageMessage(result.message);
+      return;
+    }
+
+    const newTrainer = {
+      id: createTrainerId(),
+      name: String(newTrainerName).trim(),
+      loginId: normalizeLoginId(newTrainerLoginId),
+      initialPassword: "a123456",
+      phone: newTrainerPhone,
+      isHidden: false,
+    };
+
+    onAddTrainer(newTrainer);
+    setNewTrainerName("");
+    setNewTrainerLoginId("");
+    setNewTrainerPhone("");
+    setTrainerManageMessage("강사가 등록되었습니다. 아이디: " + newTrainer.loginId + " / 초기 비밀번호: a123456");
+  }
+
+  function handleAskHideTrainer(trainer) {
+    setPendingHideTrainerId(trainer.id);
+    setTrainerManageMessage(trainer.name + " 강사를 숨김 처리하려면 '정말 숨김'을 눌러주세요. 기존 기록은 삭제되지 않습니다.");
+  }
+
+  function handleConfirmHideTrainer(trainer) {
+    onHideTrainer(trainer.id);
+    setPendingHideTrainerId(null);
+    setTrainerManageMessage(trainer.name + " 강사가 숨김 처리되었습니다. 기존 예약/회원 기록은 유지됩니다.");
+  }
+
+  function handleAskHideMember(member) {
+    setPendingHideMemberId(member.id);
+  }
+
+  function handleConfirmHideMember(member) {
+    onHideMember(member.id);
+    setPendingHideMemberId(null);
+  }
+
+  function handleRestoreMember(member) {
+    onRestoreMember(member.id);
+    setRestoreMessage(member.name + " 회원을 복구했습니다.");
+  }
+
+  function handleRestoreTrainer(trainer) {
+    onRestoreTrainer(trainer.id);
+    setRestoreMessage(trainer.name + " 강사를 복구했습니다.");
+  }
+
+  function handleOpenAdminMemberDetail(member) {
+    setSelectedAdminMemberId(member.id);
+  }
+
+  function handleCloseAdminMemberDetail() {
+    setSelectedAdminMemberId(null);
+  }
+
+  function handleAskAdminCancelReservation(reservation) {
+    setPendingAdminCancelReservationId(reservation.id);
+  }
+
+  function handleConfirmAdminCancelReservation(reservation) {
+    if (!canAdminCancelReservation(reservation)) return;
+    onCancelReservationWithPreviousStatus(reservation.id);
+    setPendingAdminCancelReservationId(null);
+  }
+
+  function handleAdminRestoreReservation(reservation) {
+    if (!canAdminRestoreReservation(reservation)) return;
+    onRestoreReservationStatus(reservation.id);
+  }
+
+  function handleResetTrainerPassword(trainer) {
+    onResetTrainerPassword(trainer.id);
+    setAdminPasswordManageMessage(trainer.name + " 강사 비밀번호를 a123456으로 초기화했습니다.");
+  }
+
+  function renderAdminPanelButton(panelId, label, count) {
+    const isActive = activeAdminPanel === panelId;
+    return (
+      <button
+        key={panelId}
+        type="button"
+        onClick={function () { setActiveAdminPanel(panelId); }}
+        className={"rounded-2xl border px-4 py-3 text-sm font-semibold transition " + (isActive ? "border-slate-900 bg-slate-900 text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50")}
+      >
+        {label}{typeof count === "number" ? " " + count : ""}
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-4">
+        <StatCard emoji="👥" label="전체 회원" value={visibleMembers.length} description="숨김 회원 제외" />
+        <StatCard emoji="📅" label="오늘 예약" value={todayReservations.length} description={todayString} />
+        <StatCard emoji="⚠️" label="2회 이하" value={lowSessionMembers.length} description="잔여 0회 제외" />
+        <StatCard emoji="✅" label="사용완료" value={completedMembers.length} description="잔여 0회" />
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-9">
+          {renderAdminPanelButton("summary", "요약")}
+          {renderAdminPanelButton("members", "전체회원", visibleMembers.length)}
+          {renderAdminPanelButton("today", "오늘예약", todayReservations.length)}
+          {renderAdminPanelButton("attention", "주의회원", lowSessionMembers.length)}
+          {renderAdminPanelButton("closed", "만료/완료", expiredMembers.length + completedMembers.length)}
+          {renderAdminPanelButton("trainers", "강사관리", visibleTrainers.length)}
+          {renderAdminPanelButton("weekly", "주차현황")}
+          {renderAdminPanelButton("hidden", "숨김관리", hiddenMembers.length + hiddenTrainers.length)}
+          {renderAdminPanelButton("database", "DB준비")}
+        </div>
+      </section>
+
+      {activeAdminPanel === "summary" ? (
+        <section className="grid gap-5 lg:grid-cols-2">
+          <AppCard>
+            <h2 className="text-xl font-bold">강사별 현황</h2>
+            <div className="mt-4 space-y-3">
+              {trainerSummaries.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">등록된 강사 현황이 없습니다.</p> : null}
+              {trainerSummaries.map(function (summary) {
+                return (
+                  <div key={summary.trainerName} className="rounded-2xl bg-slate-50 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold">{summary.trainerName}</p>
+                        <p className="mt-1 text-sm text-slate-500">회원 {summary.memberCount}명 · 예약 {summary.reservationCount}건</p>
+                      </div>
+                      <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-700 shadow-sm">강사</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </AppCard>
+
+          <AppCard>
+            <h2 className="text-xl font-bold">회원 상태 요약</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">정상 회원</p>
+                <p className="mt-1 text-2xl font-bold">{activeMembers.length}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">회원권 2회 이하</p>
+                <p className="mt-1 text-2xl font-bold">{lowSessionMembers.length}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">만료 회원</p>
+                <p className="mt-1 text-2xl font-bold">{expiredMembers.length}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm text-slate-500">사용완료 회원</p>
+                <p className="mt-1 text-2xl font-bold">{completedMembers.length}</p>
+              </div>
+            </div>
+          </AppCard>
+        </section>
+      ) : null}
+
+      {activeAdminPanel === "members" ? (
+        <div className="space-y-5">
+          {selectedAdminMemberId ? (
+            <MemberDetailCard
+              member={visibleMembers.find(function (member) { return member.id === selectedAdminMemberId; }) || null}
+              reservations={reservations}
+              todayString={todayString}
+              onClose={handleCloseAdminMemberDetail}
+            />
+          ) : null}
+
+          <AppCard>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold">전체 회원</h2>
+                <p className="mt-1 text-sm text-slate-500">이름, 연락처, 담당 강사, 주소로 검색할 수 있습니다.</p>
+              </div>
+              <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600">검색 결과 {searchedAdminMembers.length}명</div>
+            </div>
+            <input
+              value={adminMemberSearch}
+              onChange={function (event) { setAdminMemberSearch(event.target.value); }}
+              placeholder="회원 이름 / 연락처 / 강사 검색"
+              className="mt-4 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+            />
+            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+              <div className="hidden grid-cols-8 gap-3 bg-slate-50 px-4 py-3 text-xs font-bold text-slate-500 md:grid">
+                <span>성명</span>
+                <span>담당 강사</span>
+                <span>연락처</span>
+                <span>만료일</span>
+                <span>사용/총 횟수</span>
+                <span>잔여</span>
+                <span>상태</span>
+                <span>관리</span>
+              </div>
+              {searchedAdminMembers.length === 0 ? (
+                <div className="border-t border-slate-200 px-4 py-4 text-sm text-slate-500">검색 결과가 없습니다.</div>
+              ) : null}
+              {searchedAdminMembers.map(function (member) {
+                return (
+                  <div key={member.id} className="grid gap-2 border-t border-slate-200 px-4 py-4 text-sm md:grid-cols-8 md:gap-3">
+                    <p className="font-bold">{member.name}</p>
+                    <p className="text-slate-600">{member.trainerName}</p>
+                    <p className="text-slate-600">{member.phone}</p>
+                    <p className="text-slate-600">{addOneYear(member.firstLessonDate)}</p>
+                    <p className="text-slate-600">{member.usedSessions} / {member.totalSessions}</p>
+                    <p className="font-bold text-slate-900">{getRemainingSessions(member)}</p>
+                    <MemberStatusBadge member={member} todayString={todayString} />
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={function () { handleOpenAdminMemberDetail(member); }} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">상세</button>
+                      {pendingHideMemberId !== member.id ? (
+                        <button type="button" onClick={function () { handleAskHideMember(member); }} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100">숨김</button>
+                      ) : (
+                        <>
+                          <button type="button" onClick={function () { handleConfirmHideMember(member); }} className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700">정말</button>
+                          <button type="button" onClick={function () { setPendingHideMemberId(null); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">취소</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </AppCard>
+        </div>
+      ) : null}
+
+      {activeAdminPanel === "trainers" ? (
+        <section className="grid gap-5 lg:grid-cols-2">
+          <AppCard>
+            <h2 className="text-xl font-bold">강사 등록</h2>
+            <p className="mt-2 text-sm text-slate-500">관리자가 강사 아이디와 초기 비밀번호를 발급합니다.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-600">강사 이름</span>
+                <input value={newTrainerName} onChange={function (event) { setNewTrainerName(event.target.value); }} placeholder="예: 박강사" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-600">강사 아이디</span>
+                <input value={newTrainerLoginId} onChange={function (event) { setNewTrainerLoginId(normalizeLoginId(event.target.value)); }} placeholder="trainer_park" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+              </label>
+              <label className="block sm:col-span-2">
+                <span className="text-sm font-semibold text-slate-600">연락처</span>
+                <input value={newTrainerPhone} onChange={function (event) { setNewTrainerPhone(formatPhoneNumber(event.target.value)); }} placeholder="010-0000-0000" inputMode="numeric" className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900" />
+              </label>
+            </div>
+            <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+              <p>초기 비밀번호: a123456</p>
+              <p className="mt-1">아이디는 영문, 숫자, 밑줄만 저장됩니다.</p>
+            </div>
+            <button type="button" onClick={handleAddTrainer} className="mt-4 w-full rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white shadow-sm hover:bg-slate-700">강사 등록</button>
+            <p className="mt-3 text-sm text-slate-500">{trainerManageMessage}</p>
+            <p className="mt-2 text-sm text-slate-500">{adminPasswordManageMessage}</p>
+          </AppCard>
+
+          <AppCard>
+            <h2 className="text-xl font-bold">강사 목록</h2>
+            <div className="mt-4 space-y-3">
+              {visibleTrainers.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">등록된 강사가 없습니다.</p> : null}
+              {visibleTrainers.map(function (trainer) {
+                const trainerMemberCount = visibleMembers.filter(function (member) { return member.trainerName === trainer.name; }).length;
+                return (
+                  <div key={trainer.id} className="rounded-2xl border border-slate-200 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-bold">{trainer.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">아이디 {trainer.loginId} · {trainer.phone}</p>
+                        <p className="mt-1 text-xs text-slate-400">배정 회원 {trainerMemberCount}명 · 초기 비밀번호 a123456</p>
+                      </div>
+                      {pendingHideTrainerId !== trainer.id ? (
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={function () { handleResetTrainerPassword(trainer); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">PW 초기화</button>
+                          <button type="button" onClick={function () { handleAskHideTrainer(trainer); }} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100">강사 숨김</button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={function () { handleConfirmHideTrainer(trainer); }} className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700">정말 숨김</button>
+                          <button type="button" onClick={function () { setPendingHideTrainerId(null); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">취소</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </AppCard>
+        </section>
+      ) : null}
+
+      {activeAdminPanel === "weekly" ? (
+        <section className="space-y-5">
+          <AppCard>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold">주차별 현황</h2>
+                <p className="mt-1 text-sm text-slate-500">일요일~토요일 기준으로 예약과 신규 회원 등록 현황을 확인합니다.</p>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={function () { setWeekOffset(weekOffset - 1); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">이전 주</button>
+                <button type="button" onClick={function () { setWeekOffset(0); }} className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">이번 주</button>
+                <button type="button" onClick={function () { setWeekOffset(weekOffset + 1); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">다음 주</button>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className={"rounded-2xl p-4 " + (isCurrentWeekOffset(weekOffset) ? "bg-emerald-50 ring-2 ring-emerald-200" : "bg-slate-50")}>
+                <p className={"text-sm " + (isCurrentWeekOffset(weekOffset) ? "font-semibold text-emerald-700" : "text-slate-500")}>{isCurrentWeekOffset(weekOffset) ? "이번 주" : "선택 주차"}</p>
+                <p className={"mt-1 text-lg font-bold " + (isCurrentWeekOffset(weekOffset) ? "text-emerald-900" : "text-slate-900")}>{getWeekLabel(selectedWeekRange)}</p>
+              </div>
+              <div className={"rounded-2xl p-4 " + (isCurrentWeekOffset(weekOffset) ? "bg-emerald-50" : "bg-slate-50")}>
+                <p className={"text-sm " + (isCurrentWeekOffset(weekOffset) ? "text-emerald-700" : "text-slate-500")}>주간 예약</p>
+                <p className={"mt-1 text-2xl font-bold " + (isCurrentWeekOffset(weekOffset) ? "text-emerald-900" : "text-slate-900")}>{selectedWeekReservations.length}</p>
+              </div>
+              <div className={"rounded-2xl p-4 " + (isCurrentWeekOffset(weekOffset) ? "bg-emerald-50" : "bg-slate-50")}>
+                <p className={"text-sm " + (isCurrentWeekOffset(weekOffset) ? "text-emerald-700" : "text-slate-500")}>신규 회원</p>
+                <p className={"mt-1 text-2xl font-bold " + (isCurrentWeekOffset(weekOffset) ? "text-emerald-900" : "text-slate-900")}>{selectedWeekNewMembers.length}</p>
+              </div>
+            </div>
+          </AppCard>
+
+          <section className="grid gap-5 lg:grid-cols-2">
+            <AppCard>
+              <h3 className="text-lg font-bold">강사별 주간 예약 횟수</h3>
+              <div className="mt-4 space-y-3">
+                {selectedWeekTrainerSummaries.map(function (summary) {
+                  return (
+                    <div key={summary.trainerName} className="rounded-2xl bg-slate-50 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-bold">{summary.trainerName}</p>
+                          <p className="mt-1 text-sm text-slate-500">신규 회원 {summary.newMemberCount}명</p>
+                        </div>
+                        <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-700 shadow-sm">예약 {summary.reservationCount}건</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </AppCard>
+
+            <AppCard>
+              <h3 className="text-lg font-bold">주간 예약 목록</h3>
+              <div className="mt-4 space-y-3">
+                {selectedWeekReservations.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">선택한 주차의 예약이 없습니다.</p> : null}
+                {sortReservations(selectedWeekReservations).map(function (reservation) {
+                  return (
+                    <div key={reservation.id} className="rounded-2xl bg-slate-50 p-4">
+                      <p className="font-bold">{reservation.date} {reservation.time}</p>
+                      <p className="mt-1 text-sm text-slate-500">{reservation.memberName} · {reservation.trainerName} · {reservation.durationMinutes}분</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </AppCard>
+          </section>
+        </section>
+      ) : null}
+
+      {activeAdminPanel === "database" ? (
+        <section className="space-y-5">
+          <AppCard>
+            <h2 className="text-xl font-bold">DB 연결 준비</h2>
+            <p className="mt-2 text-sm text-slate-500">Supabase 연결 전에 현재 앱 데이터를 테이블 단위로 나눈 기준입니다.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {getDatabaseReadinessItems().map(function (item) {
+                return (
+                  <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4">
+                    <p className="text-sm font-semibold text-slate-700">{item.label}</p>
+                    <span className={"rounded-full px-3 py-1 text-xs font-bold " + (item.done ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
+                      {item.done ? "준비됨" : "남음"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </AppCard>
+
+          <AppCard>
+            <h2 className="text-xl font-bold">추천 테이블 구조</h2>
+            <div className="mt-4 space-y-3">
+              {DATABASE_TABLES.map(function (table) {
+                return (
+                  <div key={table.name} className="rounded-2xl border border-slate-200 p-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-bold">{table.label}</p>
+                        <p className="mt-1 text-sm text-slate-500">{table.name}</p>
+                        <p className="mt-2 text-sm text-slate-600">{table.purpose}</p>
+                      </div>
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{table.fields.length}개 필드</span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {table.fields.map(function (field) {
+                        return <span key={field} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">{field}</span>;
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </AppCard>
+        </section>
+      ) : null}
+
+      {activeAdminPanel === "hidden" ? (
+        <section className="grid gap-5 lg:grid-cols-2">
+          <AppCard>
+            <h2 className="text-xl font-bold">숨김 회원</h2>
+            <p className="mt-2 text-sm text-slate-500">숨김 처리된 회원은 목록에서 제외되지만 기록은 보존됩니다.</p>
+            <div className="mt-4 space-y-3">
+              {hiddenMembers.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">숨김 회원이 없습니다.</p> : null}
+              {hiddenMembers.map(function (member) {
+                return (
+                  <div key={member.id} className="rounded-2xl border border-slate-200 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-bold">{member.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">담당 {member.trainerName} · {member.phone}</p>
+                        <p className="mt-1 text-xs text-slate-400">잔여 {getRemainingSessions(member)}회 · 만료일 {addOneYear(member.firstLessonDate)}</p>
+                      </div>
+                      <button type="button" onClick={function () { handleRestoreMember(member); }} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">회원 복구</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </AppCard>
+
+          <AppCard>
+            <h2 className="text-xl font-bold">숨김 강사</h2>
+            <p className="mt-2 text-sm text-slate-500">숨김 처리된 강사는 강사 목록에서 제외되지만 기존 예약과 회원 기록은 유지됩니다.</p>
+            <div className="mt-4 space-y-3">
+              {hiddenTrainers.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">숨김 강사가 없습니다.</p> : null}
+              {hiddenTrainers.map(function (trainer) {
+                return (
+                  <div key={trainer.id} className="rounded-2xl border border-slate-200 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-bold">{trainer.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">아이디 {trainer.loginId} · {trainer.phone}</p>
+                      </div>
+                      <button type="button" onClick={function () { handleRestoreTrainer(trainer); }} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">강사 복구</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-sm text-slate-500">{restoreMessage}</p>
+          </AppCard>
+        </section>
+      ) : null}
+
+      {activeAdminPanel === "today" ? (
+        <AppCard>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold">오늘의 예약</h2>
+              <p className="mt-1 text-sm text-slate-500">회원명, 강사명, 시간, 상태로 검색할 수 있습니다.</p>
+            </div>
+            <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600">검색 결과 {filteredTodayReservations.length}건</div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px]">
+            <input
+              value={adminReservationSearch}
+              onChange={function (event) { setAdminReservationSearch(event.target.value); }}
+              placeholder="회원명 / 강사명 / 시간 검색"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+            />
+            <select
+              value={adminReservationStatusFilter}
+              onChange={function (event) { setAdminReservationStatusFilter(event.target.value); }}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-900"
+            >
+              <option value="ALL">전체 상태</option>
+              <option value={SESSION_STATUS.REQUESTED}>예약요청</option>
+              <option value={SESSION_STATUS.CONFIRMED}>예약확정</option>
+              <option value={SESSION_STATUS.WAITING_MEMBER_CONFIRM}>차감대기</option>
+              <option value={SESSION_STATUS.DEDUCTED}>차감완료</option>
+              <option value={SESSION_STATUS.CANCELED}>예약취소</option>
+            </select>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {filteredTodayReservations.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">검색 조건에 맞는 오늘 예약이 없습니다.</p> : null}
+            {filteredTodayReservations.map(function (reservation) {
+              return (
+                <div key={reservation.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-bold">{reservation.time} · {reservation.memberName}</p>
+                      <p className="mt-1 text-sm text-slate-500">{reservation.trainerName} · {reservation.durationMinutes}분 · 차감 {getDeductionByDuration(reservation.durationMinutes)}회</p>
+                    </div>
+                    <div className="flex flex-col items-start gap-2 sm:items-end">
+                      <StatusBadge status={reservation.status} />
+                      {canAdminCancelReservation(reservation) && pendingAdminCancelReservationId !== reservation.id ? (
+                        <button type="button" onClick={function () { handleAskAdminCancelReservation(reservation); }} className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100">관리자 취소</button>
+                      ) : null}
+                      {canAdminCancelReservation(reservation) && pendingAdminCancelReservationId === reservation.id ? (
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={function () { handleConfirmAdminCancelReservation(reservation); }} className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700">확인</button>
+                          <button type="button" onClick={function () { setPendingAdminCancelReservationId(null); }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">아니오</button>
+                        </div>
+                      ) : null}
+                      {canAdminRestoreReservation(reservation) ? (
+                        <button type="button" onClick={function () { handleAdminRestoreReservation(reservation); }} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-700">예약복구</button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AppCard>
+      ) : null}
+
+      {activeAdminPanel === "attention" ? (
+        <AdminListCard title="주의 회원" emptyText="주의 회원이 없습니다." items={lowSessionMembers.map(function (member) { return member.name + " · 담당 " + member.trainerName + " · 잔여 " + getRemainingSessions(member) + "회 · 만료일 " + addOneYear(member.firstLessonDate); })} />
+      ) : null}
+
+      {activeAdminPanel === "closed" ? (
+        <section className="grid gap-5 lg:grid-cols-2">
+          <AdminListCard title="만료 회원" emptyText="만료 회원이 없습니다." items={expiredMembers.map(function (member) { return member.name + " · 담당 " + member.trainerName + " · 만료일 " + addOneYear(member.firstLessonDate); })} />
+          <AdminListCard title="사용완료 회원" emptyText="사용완료 회원이 없습니다." items={completedMembers.map(function (member) { return member.name + " · 담당 " + member.trainerName + " · 총 " + member.totalSessions + "회 사용완료"; })} />
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function AdminListCard({ title, emptyText, items }) {
+  return (
+    <AppCard>
+      <h2 className="text-xl font-bold">{title}</h2>
+      <div className="mt-4 space-y-3">
+        {items.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">{emptyText}</p> : null}
+        {items.map(function (item) {
+          return <p key={item} className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">{item}</p>;
+        })}
+      </div>
+    </AppCard>
+  );
+}
+
+export default function PTReservationApp() {
+  const [selectedRole, setSelectedRole] = useState("member");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [today, setToday] = useState(function () { return new Date(); });
+  const [reservations, setReservations] = useState(INITIAL_RESERVATIONS);
+  const [members, setMembers] = useState(SAMPLE_MEMBERS);
+  const [trainers, setTrainers] = useState(SAMPLE_TRAINERS);
+  const [admins, setAdmins] = useState(SAMPLE_ADMINS);
+
+  const tests = useMemo(function () {
+    return runBusinessRuleTests();
+  }, []);
+
+  function refreshToday() {
+    setToday(new Date());
+  }
+
+  function handleLogin(loginData) {
+    refreshToday();
+    const result = authenticateLogin({
+      role: loginData.role,
+      authCode: loginData.authCode,
+      loginId: loginData.loginId,
+      password: loginData.password,
+      members: members,
+      trainers: trainers,
+      admins: admins,
+    });
+
+    if (!result.ok) return result;
+    setCurrentUser(result.user);
+    return result;
+  }
+
+  function handleLogout() {
+    refreshToday();
+    setCurrentUser(null);
+  }
+
+  function handleAddReservation(newReservation) {
+    setReservations(function (previousReservations) {
+      return sortReservations(previousReservations.concat(newReservation));
+    });
+  }
+
+  function handleCancelReservation(reservationId) {
+    setReservations(function (previousReservations) {
+      return previousReservations.map(function (reservation) {
+        if (reservation.id !== reservationId) return reservation;
+        return Object.assign({}, reservation, {
+          previousStatus: reservation.previousStatus || reservation.status,
+          status: SESSION_STATUS.CANCELED,
+        });
+      });
+    });
+  }
+
+  function handleCancelReservationWithPreviousStatus(reservationId) {
+    setReservations(function (previousReservations) {
+      return previousReservations.map(function (reservation) {
+        if (reservation.id !== reservationId) return reservation;
+        return Object.assign({}, reservation, {
+          previousStatus: reservation.previousStatus || reservation.status,
+          status: SESSION_STATUS.CANCELED,
+        });
+      });
+    });
+  }
+
+  function handleRestoreReservationStatus(reservationId) {
+    setReservations(function (previousReservations) {
+      return previousReservations.map(function (reservation) {
+        if (reservation.id !== reservationId) return reservation;
+        if (!reservation.previousStatus) return reservation;
+        return Object.assign({}, reservation, {
+          status: reservation.previousStatus,
+          previousStatus: null,
+        });
+      });
+    });
+  }
+
+  function handleUpdateReservationStatus(reservationId, nextStatus) {
+    setReservations(function (previousReservations) {
+      return previousReservations.map(function (reservation) {
+        if (reservation.id !== reservationId) return reservation;
+        return Object.assign({}, reservation, { status: nextStatus });
+      });
+    });
+  }
+
+  function handleAddMember(newMember) {
+    setMembers(function (previousMembers) {
+      return previousMembers.concat(newMember);
+    });
+  }
+
+  function handleAddTrainer(newTrainer) {
+    setTrainers(function (previousTrainers) {
+      return previousTrainers.concat(newTrainer);
+    });
+  }
+
+  function handleHideTrainer(trainerId) {
+    setTrainers(function (previousTrainers) {
+      return previousTrainers.map(function (trainer) {
+        if (trainer.id !== trainerId) return trainer;
+        return Object.assign({}, trainer, { isHidden: true });
+      });
+    });
+  }
+
+  function handleHideMember(memberId) {
+    setMembers(function (previousMembers) {
+      return previousMembers.map(function (member) {
+        if (member.id !== memberId) return member;
+        return Object.assign({}, member, { isHidden: true });
+      });
+    });
+  }
+
+  function handleRestoreTrainer(trainerId) {
+    setTrainers(function (previousTrainers) {
+      return previousTrainers.map(function (trainer) {
+        if (trainer.id !== trainerId) return trainer;
+        return Object.assign({}, trainer, { isHidden: false });
+      });
+    });
+  }
+
+  function handleRestoreMember(memberId) {
+    setMembers(function (previousMembers) {
+      return previousMembers.map(function (member) {
+        if (member.id !== memberId) return member;
+        return Object.assign({}, member, { isHidden: false });
+      });
+    });
+  }
+
+  function handleResetMemberPassword(memberId) {
+    setMembers(function (previousMembers) {
+      return previousMembers.map(function (member) {
+        if (member.id !== memberId) return member;
+        return Object.assign({}, member, { password: getInitialPassword() });
+      });
+    });
+  }
+
+  function handleResetTrainerPassword(trainerId) {
+    setTrainers(function (previousTrainers) {
+      return previousTrainers.map(function (trainer) {
+        if (trainer.id !== trainerId) return trainer;
+        return Object.assign({}, trainer, { password: getInitialPassword(), initialPassword: getInitialPassword() });
+      });
+    });
+  }
+
+  function handleChangeOwnPassword(currentPassword, newPassword) {
+    if (!currentUser) return { ok: false, message: "로그인 정보가 없습니다." };
+
+    if (currentUser.role === "member") {
+      const member = members.find(function (item) { return item.id === currentUser.id; });
+      if (!member) return { ok: false, message: "회원 정보를 찾을 수 없습니다." };
+      if (String(member.password || getInitialPassword()) !== String(currentPassword)) return { ok: false, message: "현재 비밀번호가 일치하지 않습니다." };
+      setMembers(function (previousMembers) {
+        return previousMembers.map(function (item) {
+          if (item.id !== currentUser.id) return item;
+          return Object.assign({}, item, { password: newPassword });
+        });
+      });
+      return { ok: true, message: "회원 비밀번호가 변경되었습니다." };
+    }
+
+    if (currentUser.role === "trainer") {
+      const trainer = trainers.find(function (item) { return item.id === currentUser.id; });
+      if (!trainer) return { ok: false, message: "강사 정보를 찾을 수 없습니다." };
+      if (String(trainer.password || trainer.initialPassword || getInitialPassword()) !== String(currentPassword)) return { ok: false, message: "현재 비밀번호가 일치하지 않습니다." };
+      setTrainers(function (previousTrainers) {
+        return previousTrainers.map(function (item) {
+          if (item.id !== currentUser.id) return item;
+          return Object.assign({}, item, { password: newPassword, initialPassword: newPassword });
+        });
+      });
+      return { ok: true, message: "강사 비밀번호가 변경되었습니다." };
+    }
+
+    if (currentUser.role === "admin") {
+      const admin = admins.find(function (item) { return item.id === currentUser.id; });
+      if (!admin) return { ok: false, message: "관리자 정보를 찾을 수 없습니다." };
+      if (String(admin.password || "") !== String(currentPassword)) return { ok: false, message: "현재 비밀번호가 일치하지 않습니다." };
+      setAdmins(function (previousAdmins) {
+        return previousAdmins.map(function (item) {
+          if (item.id !== currentUser.id) return item;
+          return Object.assign({}, item, { password: newPassword });
+        });
+      });
+      return { ok: true, message: "관리자 비밀번호가 변경되었습니다." };
+    }
+
+    return { ok: false, message: "비밀번호 변경 권한이 없습니다." };
+  }
+
+  function handleMemberConfirmLessonComplete(reservation) {
+    const deduction = getDeductionByDuration(reservation.durationMinutes);
+
+    setReservations(function (previousReservations) {
+      return previousReservations.map(function (currentReservation) {
+        if (currentReservation.id !== reservation.id) return currentReservation;
+        return Object.assign({}, currentReservation, { status: SESSION_STATUS.DEDUCTED });
+      });
+    });
+
+    setMembers(function (previousMembers) {
+      return previousMembers.map(function (member) {
+        if (member.name !== reservation.memberName) return member;
+        return Object.assign({}, member, { usedSessions: Number(member.usedSessions || 0) + deduction });
+      });
+    });
+
+    if (currentUser && currentUser.role === "member" && currentUser.name === reservation.memberName) {
+      setCurrentUser(function (previousUser) {
+        if (!previousUser) return previousUser;
+        return Object.assign({}, previousUser, { usedSessions: Number(previousUser.usedSessions || 0) + deduction });
+      });
+    }
+  }
+
+  if (!currentUser) {
+    return <LoginScreen selectedRole={selectedRole} setSelectedRole={setSelectedRole} onLogin={handleLogin} today={today} tests={tests} />;
+  }
+
+  return (
+    <DashboardLayout user={currentUser} today={today} onLogout={handleLogout} onChangeOwnPassword={handleChangeOwnPassword}>
+      {currentUser.role === "member" ? <MemberDashboard user={currentUser} today={today} reservations={reservations} members={members} onAddReservation={handleAddReservation} onCancelReservation={handleCancelReservation} onMemberConfirmLessonComplete={handleMemberConfirmLessonComplete} onChangeOwnPassword={handleChangeOwnPassword} /> : null}
+      {currentUser.role === "trainer" ? <TrainerDashboard user={currentUser} today={today} reservations={reservations} members={members} onUpdateReservationStatus={handleUpdateReservationStatus} onCancelReservationWithPreviousStatus={handleCancelReservationWithPreviousStatus} onAddMember={handleAddMember} onAddReservationFromTrainer={handleAddReservation} onResetMemberPassword={handleResetMemberPassword} onChangeOwnPassword={handleChangeOwnPassword} /> : null}
+      {currentUser.role === "admin" ? <AdminDashboard today={today} reservations={reservations} members={members} trainers={trainers} onAddTrainer={handleAddTrainer} onHideTrainer={handleHideTrainer} onHideMember={handleHideMember} onRestoreTrainer={handleRestoreTrainer} onRestoreMember={handleRestoreMember} onCancelReservationWithPreviousStatus={handleCancelReservationWithPreviousStatus} onRestoreReservationStatus={handleRestoreReservationStatus} onResetTrainerPassword={handleResetTrainerPassword} onChangeOwnPassword={handleChangeOwnPassword} /> : null}
+    </DashboardLayout>
+  );
+}
