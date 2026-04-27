@@ -793,6 +793,7 @@ function runBusinessRuleTests() {
     { name: "차감대기 이후 회원 취소 불가", pass: canMemberCancelReservation({ status: SESSION_STATUS.WAITING_MEMBER_CONFIRM }, testToday) === false },
     { name: "회원 예약취소는 48시간 전까지만 가능", pass: canMemberCancelReservation({ status: SESSION_STATUS.CONFIRMED, date: "2026-04-30", time: "10:00" }, testToday) === true && canMemberCancelReservation({ status: SESSION_STATUS.CONFIRMED, date: "2026-04-28", time: "10:00" }, testToday) === false },
     { name: "잔여횟수 부족 시 예약 불가", pass: validateReservationRequest({ reservations: [], members: [{ name: "부족회원", totalSessions: 1, usedSessions: 1, isHidden: false }], memberName: "부족회원", trainerName: "테스트강사", date: "2026-04-29", time: "10:00", durationMinutes: 30, today: testToday }).ok === false },
+    { name: "잔여횟수가 충분하면 예약 가능", pass: validateReservationRequest({ reservations: [], members: [{ name: "가능회원", totalSessions: 1, usedSessions: 0.5, isHidden: false }], memberName: "가능회원", trainerName: "테스트강사", date: "2026-04-29", time: "10:00", durationMinutes: 30, today: testToday }).ok === true },
     { name: "강사는 예약요청을 확정 가능", pass: canTrainerConfirmReservation({ status: SESSION_STATUS.REQUESTED }) === true },
     { name: "강사는 예약확정 후 수업완료 가능", pass: canTrainerCompleteReservation({ status: SESSION_STATUS.CONFIRMED }) === true },
     { name: "회원은 차감대기 상태를 확인 가능", pass: canMemberConfirmLessonComplete({ status: SESSION_STATUS.WAITING_MEMBER_CONFIRM }) === true },
@@ -1080,7 +1081,7 @@ function LoginScreen({ selectedRole, setSelectedRole, onLogin, today, tests }) {
   );
 }
 
-function DashboardLayout({ user, today, onLogout, onChangeOwnPassword, children }) {
+function DashboardLayout({ user, today, onLogout, onChangeOwnPassword, bottomNavigation, children }) {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   return (
@@ -1109,7 +1110,8 @@ function DashboardLayout({ user, today, onLogout, onChangeOwnPassword, children 
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 pb-28 pt-6 md:pb-6">{children}</main>
+      {bottomNavigation ? <div className="md:hidden">{bottomNavigation}</div> : null}
 
       {isPasswordModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
@@ -1137,6 +1139,29 @@ function DashboardLayout({ user, today, onLogout, onChangeOwnPassword, children 
         </div>
       ) : null}
     </div>
+  );
+}
+
+function MobileBottomNavigation({ items, activeId, onSelect }) {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 px-3 pb-3 pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+      <div className="mx-auto grid max-w-xl grid-cols-4 gap-2">
+        {items.map(function (item) {
+          const isActive = activeId === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={function () { onSelect(item.id); }}
+              className={"rounded-2xl px-2 py-2 text-center text-xs font-semibold transition " + (isActive ? "bg-slate-900 text-white shadow-sm" : "bg-slate-50 text-slate-500 hover:bg-slate-100")}
+            >
+              <span className="block text-base">{item.icon}</span>
+              <span className="mt-0.5 block truncate">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
 
@@ -1472,7 +1497,7 @@ function MemberDashboard({ user, today, reservations, members, onAddReservation,
   );
 }
 
-function TrainerDashboard({ user, today, reservations, members, onUpdateReservationStatus, onCancelReservationWithPreviousStatus, onAddMember, onAddReservationFromTrainer, onResetMemberPassword, onChangeOwnPassword }) {
+function TrainerDashboard({ user, today, reservations, members, activePanel, setActivePanel, onUpdateReservationStatus, onCancelReservationWithPreviousStatus, onAddMember, onAddReservationFromTrainer, onResetMemberPassword, onChangeOwnPassword }) {
   const trainerReservations = sortReservations(reservations.filter(function (reservation) {
     return reservation.trainerName === user.name;
   }));
@@ -1482,7 +1507,6 @@ function TrainerDashboard({ user, today, reservations, members, onUpdateReservat
   const requestedCount = trainerReservations.filter(function (reservation) { return reservation.status === SESSION_STATUS.REQUESTED; }).length;
   const waitingMemberConfirmCount = trainerReservations.filter(function (reservation) { return reservation.status === SESSION_STATUS.WAITING_MEMBER_CONFIRM; }).length;
   const todayString = toDateOnly(today);
-  const [activePanel, setActivePanel] = useState("reservations");
   const [trainerWeekOffset, setTrainerWeekOffset] = useState(0);
   const [trainerDayDate, setTrainerDayDate] = useState(todayString);
   const [newMemberName, setNewMemberName] = useState("");
@@ -1584,7 +1608,8 @@ function TrainerDashboard({ user, today, reservations, members, onUpdateReservat
       usedSessions: 0,
       nextLessonDate: null,
       authCode: authCode,
-      initialPassword: "a123456",
+      password: getInitialPassword(),
+      initialPassword: getInitialPassword(),
       isHidden: false,
     };
 
@@ -1594,12 +1619,13 @@ function TrainerDashboard({ user, today, reservations, members, onUpdateReservat
     setNewMemberPhone("");
     setNewMemberAddress("");
     setNewMemberSessions(22);
-    setNewMemberMessage("회원이 추가되었습니다. 발행된 인증번호: " + authCode + " / 초기 비밀번호: a123456");
+    setNewMemberMessage("회원이 추가되었습니다. 발행된 인증번호: " + authCode + " / 초기 비밀번호: " + getInitialPassword());
   }
 
   function handleTrainerAddReservation() {
     const result = validateReservationRequest({
       reservations: reservations,
+      members: members,
       memberName: selectedBookingMember ? selectedBookingMember.name : "",
       trainerName: user.name,
       date: trainerBookingDate,
@@ -2096,9 +2122,8 @@ function TrainerDashboard({ user, today, reservations, members, onUpdateReservat
   );
 }
 
-function AdminDashboard({ today, reservations, members, trainers, onAddTrainer, onHideTrainer, onHideMember, onRestoreTrainer, onRestoreMember, onCancelReservationWithPreviousStatus, onRestoreReservationStatus, onResetTrainerPassword, onChangeOwnPassword }) {
+function AdminDashboard({ today, reservations, members, trainers, activeAdminPanel, setActiveAdminPanel, onAddTrainer, onHideTrainer, onHideMember, onRestoreTrainer, onRestoreMember, onCancelReservationWithPreviousStatus, onRestoreReservationStatus, onResetTrainerPassword, onChangeOwnPassword }) {
   const todayString = toDateOnly(today);
-  const [activeAdminPanel, setActiveAdminPanel] = useState("summary");
   const [weekOffset, setWeekOffset] = useState(0);
   const visibleMembers = members.filter(function (member) { return !member.isHidden; });
   const hiddenMembers = members.filter(function (member) { return member.isHidden; });
@@ -2176,7 +2201,8 @@ function AdminDashboard({ today, reservations, members, trainers, onAddTrainer, 
       id: createTrainerId(),
       name: String(newTrainerName).trim(),
       loginId: normalizeLoginId(newTrainerLoginId),
-      initialPassword: "a123456",
+      initialPassword: getInitialPassword(),
+      password: getInitialPassword(),
       phone: newTrainerPhone,
       isHidden: false,
     };
@@ -2185,7 +2211,7 @@ function AdminDashboard({ today, reservations, members, trainers, onAddTrainer, 
     setNewTrainerName("");
     setNewTrainerLoginId("");
     setNewTrainerPhone("");
-    setTrainerManageMessage("강사가 등록되었습니다. 아이디: " + newTrainer.loginId + " / 초기 비밀번호: a123456");
+    setTrainerManageMessage("강사가 등록되었습니다. 아이디: " + newTrainer.loginId + " / 초기 비밀번호: " + getInitialPassword());
   }
 
   function handleAskHideTrainer(trainer) {
@@ -2721,6 +2747,8 @@ export default function PTReservationApp() {
   const [members, setMembers] = useState(SAMPLE_MEMBERS);
   const [trainers, setTrainers] = useState(SAMPLE_TRAINERS);
   const [admins, setAdmins] = useState(SAMPLE_ADMINS);
+  const [trainerActivePanel, setTrainerActivePanel] = useState("weekCalendar");
+  const [adminActivePanel, setAdminActivePanel] = useState("summary");
 
   const tests = useMemo(function () {
     return runBusinessRuleTests();
@@ -2944,11 +2972,33 @@ export default function PTReservationApp() {
     return <LoginScreen selectedRole={selectedRole} setSelectedRole={setSelectedRole} onLogin={handleLogin} today={today} tests={tests} />;
   }
 
+  const trainerMobileItems = [
+    { id: "weekCalendar", label: "주간", icon: "📅" },
+    { id: "dayView", label: "일별", icon: "📆" },
+    { id: "reservations", label: "예약", icon: "✅" },
+    { id: "members", label: "회원", icon: "👥" },
+  ];
+
+  const adminMobileItems = [
+    { id: "summary", label: "요약", icon: "📊" },
+    { id: "today", label: "오늘", icon: "📅" },
+    { id: "members", label: "회원", icon: "👥" },
+    { id: "weekly", label: "주차", icon: "📈" },
+  ];
+
+  let bottomNavigation = null;
+  if (currentUser.role === "trainer") {
+    bottomNavigation = <MobileBottomNavigation items={trainerMobileItems} activeId={trainerActivePanel} onSelect={setTrainerActivePanel} />;
+  }
+  if (currentUser.role === "admin") {
+    bottomNavigation = <MobileBottomNavigation items={adminMobileItems} activeId={adminActivePanel} onSelect={setAdminActivePanel} />;
+  }
+
   return (
-    <DashboardLayout user={currentUser} today={today} onLogout={handleLogout} onChangeOwnPassword={handleChangeOwnPassword}>
+    <DashboardLayout user={currentUser} today={today} onLogout={handleLogout} onChangeOwnPassword={handleChangeOwnPassword} bottomNavigation={bottomNavigation}>
       {currentUser.role === "member" ? <MemberDashboard user={currentUser} today={today} reservations={reservations} members={members} onAddReservation={handleAddReservation} onCancelReservation={handleCancelReservation} onMemberConfirmLessonComplete={handleMemberConfirmLessonComplete} onChangeOwnPassword={handleChangeOwnPassword} /> : null}
-      {currentUser.role === "trainer" ? <TrainerDashboard user={currentUser} today={today} reservations={reservations} members={members} onUpdateReservationStatus={handleUpdateReservationStatus} onCancelReservationWithPreviousStatus={handleCancelReservationWithPreviousStatus} onAddMember={handleAddMember} onAddReservationFromTrainer={handleAddReservation} onResetMemberPassword={handleResetMemberPassword} onChangeOwnPassword={handleChangeOwnPassword} /> : null}
-      {currentUser.role === "admin" ? <AdminDashboard today={today} reservations={reservations} members={members} trainers={trainers} onAddTrainer={handleAddTrainer} onHideTrainer={handleHideTrainer} onHideMember={handleHideMember} onRestoreTrainer={handleRestoreTrainer} onRestoreMember={handleRestoreMember} onCancelReservationWithPreviousStatus={handleCancelReservationWithPreviousStatus} onRestoreReservationStatus={handleRestoreReservationStatus} onResetTrainerPassword={handleResetTrainerPassword} onChangeOwnPassword={handleChangeOwnPassword} /> : null}
+      {currentUser.role === "trainer" ? <TrainerDashboard user={currentUser} today={today} reservations={reservations} members={members} activePanel={trainerActivePanel} setActivePanel={setTrainerActivePanel} onUpdateReservationStatus={handleUpdateReservationStatus} onCancelReservationWithPreviousStatus={handleCancelReservationWithPreviousStatus} onAddMember={handleAddMember} onAddReservationFromTrainer={handleAddReservation} onResetMemberPassword={handleResetMemberPassword} onChangeOwnPassword={handleChangeOwnPassword} /> : null}
+      {currentUser.role === "admin" ? <AdminDashboard today={today} reservations={reservations} members={members} trainers={trainers} activeAdminPanel={adminActivePanel} setActiveAdminPanel={setAdminActivePanel} onAddTrainer={handleAddTrainer} onHideTrainer={handleHideTrainer} onHideMember={handleHideMember} onRestoreTrainer={handleRestoreTrainer} onRestoreMember={handleRestoreMember} onCancelReservationWithPreviousStatus={handleCancelReservationWithPreviousStatus} onRestoreReservationStatus={handleRestoreReservationStatus} onResetTrainerPassword={handleResetTrainerPassword} onChangeOwnPassword={handleChangeOwnPassword} /> : null}
     </DashboardLayout>
   );
 }
